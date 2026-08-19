@@ -23,6 +23,23 @@ Enforced in two places, so drift can't land:
 
 Stdlib only, no dependencies, runs on Python 3.11+, works on Windows.
 
+## `screenshots.py`
+
+Regenerates the README screenshots from a live local stack.
+
+```bash
+python scripts/screenshots.py --activity
+```
+
+Run it on a **desktop machine**, not a headless CI box: headless browsers
+frequently fail to load the Material Symbols icon font, and every nav item
+comes out as its ligature name ("space_dashboard" instead of the icon). The
+script detects that and refuses rather than writing broken images.
+
+Full setup instructions are in the file's docstring — it needs the backend
+running with CORS open to the preview server, and the frontend built against
+that backend.
+
 ## Which file does each tool read?
 
 | Tool | Reads |
