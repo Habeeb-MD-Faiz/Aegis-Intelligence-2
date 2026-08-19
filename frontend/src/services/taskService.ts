@@ -1,6 +1,5 @@
 import { ApiError } from './api'
-
-const API_BASE_URL = 'https://aegis-backend-lx1z.onrender.com'
+import { API_BASE_URL } from '@/config'
 
 export interface ExecuteTaskRequest {
   message: string

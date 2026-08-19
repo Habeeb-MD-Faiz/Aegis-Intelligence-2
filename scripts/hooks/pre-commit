@@ -1,0 +1,13 @@
+#!/bin/sh
+# Fail the commit if AGENTS.md and CLAUDE.md have drifted apart.
+#
+# Install once:  git config core.hooksPath scripts/hooks
+#
+# AGENTS.md is canonical. Edit it, then run:
+#   python scripts/sync_agent_docs.py
+
+python3 scripts/sync_agent_docs.py --check || python scripts/sync_agent_docs.py --check || {
+    echo
+    echo "Commit blocked: agent context files are out of sync."
+    exit 1
+}

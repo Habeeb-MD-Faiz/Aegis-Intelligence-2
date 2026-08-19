@@ -1,0 +1,12 @@
+The full agent context for this repository is in AGENTS.md at the repo root.
+Read it before making changes.
+
+Invariants that must not be broken:
+- Agents never hold payment credentials (backend/credentials.py).
+- Agents can only name catalog providers — no URLs, addresses or amounts.
+- Fail closed: policy engine errors mean refuse.
+- Policy mutation needs an operator credential; agent credentials are rejected.
+- Enforcement and risk scoring are deterministic — no LLM in that path.
+- Never claim a capability the code does not have.
+
+Tests: cd backend && python -m pytest -q  (67 tests)

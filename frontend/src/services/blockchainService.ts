@@ -1,6 +1,7 @@
 import { blockchainNodes, blocks } from '@/data/governance'
 import { withFlakiness } from './api'
 import type { BlockchainNode, BlockEntry } from '@/types'
+import { API_BASE_URL } from '@/config'
 
 export async function fetchBlockchainNodes(): Promise<BlockchainNode[]> {
   return withFlakiness([...blockchainNodes])
@@ -9,8 +10,6 @@ export async function fetchBlockchainNodes(): Promise<BlockchainNode[]> {
 export async function fetchBlocks(): Promise<BlockEntry[]> {
   return withFlakiness([...blocks])
 }
-
-const API_BASE_URL = "https://aegis-backend-lx1z.onrender.com"
 
 export interface BlockchainBlock {
   blockNumber: number

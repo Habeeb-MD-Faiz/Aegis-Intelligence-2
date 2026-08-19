@@ -1,4 +1,5 @@
 import { ROUTES } from '@/router/routes'
+import { HIDE_MOCK_SCREENS } from '@/config'
 
 export interface NavItem {
   label: string
@@ -11,7 +12,29 @@ export interface NavGroup {
   items: NavItem[]
 }
 
-export const navGroups: NavGroup[] = [
+/**
+ * Screens still backed by static fixtures in `src/data/` rather than live
+ * backend data.
+ *
+ * These are worth hiding before a demo. Analytics in particular computes
+ * "Total Spent" from mock payments, so a viewer who runs three transactions
+ * and then opens it sees numbers with no relationship to what they just did —
+ * which casts doubt on the screens that *are* real.
+ *
+ * Set VITE_HIDE_MOCK_SCREENS=true to drop them from the navigation.
+ */
+export const MOCK_BACKED_ROUTES: string[] = [
+  // Analytics now reads /requests and is no longer listed here.
+  ROUTES.incidents,
+  ROUTES.auditLogs,
+  ROUTES.approvals,
+]
+
+export function isMockBacked(path: string): boolean {
+  return MOCK_BACKED_ROUTES.includes(path)
+}
+
+const allNavGroups: NavGroup[] = [
   {
     label: 'Operate',
     items: [
@@ -91,6 +114,19 @@ export const navGroups: NavGroup[] = [
     ],
   },
 ]
+
+/**
+ * Navigation as rendered. Fixture-backed screens drop out when
+ * VITE_HIDE_MOCK_SCREENS=true, and any group left empty drops with them.
+ */
+export const navGroups: NavGroup[] = HIDE_MOCK_SCREENS
+  ? allNavGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !isMockBacked(item.path)),
+      }))
+      .filter((group) => group.items.length > 0)
+  : allNavGroups
 
 export const settingsNav: NavItem = {
   label: 'Settings',

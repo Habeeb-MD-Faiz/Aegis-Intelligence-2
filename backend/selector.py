@@ -1,204 +1,52 @@
-import json
+"""
+Task submission — the legacy entry point, now a thin wrapper over the guard.
 
-from guardrails import evaluate_payment
-from request_history import add_request
-from blockchain import create_blockchain_record
-from x402.payment_service import create_payment_request
+This used to contain its own copy of the decide-record-pay sequence, which
+meant `/execute-task` and any newer route could drift apart and enforce
+subtly different policy. Everything now funnels through guard.spend(), so
+there is exactly one path money can take.
 
-# ============================================================
-# Load API catalog and keyword mapping
-# ============================================================
+Behaviour changes inherited from the guard:
 
-with open("api_catalog.json", "r", encoding="utf-8") as f:
-    apis = json.load(f)
+- Unmatched tasks return a helpful response listing what AEGIS can actually
+  reach, instead of a bare "Could not determine the task category." A judge
+  typing "buy 500 GPUs" now gets an answer rather than an error.
 
-with open("keyword_map.json", "r", encoding="utf-8") as f:
-    keywords = json.load(f)
+- Service selection is cost-aware rather than always taking the first catalog
+  entry, so the cheaper alternatives are reachable.
+"""
+
+from typing import Dict
+
+import catalog
+import guard
 
 
-# ============================================================
-# Select API + evaluate payment
-# ============================================================
+def select_api(user_prompt: str) -> Dict:
+    """
+    Submit a task to AEGIS and return the guard's decision.
+    """
 
-def select_api(user_prompt: str):
+    try:
+        return guard.spend(task=user_prompt, agent_id="task-console")
 
-    user_prompt = user_prompt.lower()
-
-    # --------------------------------------------------------
-    # Find matching categories
-    # --------------------------------------------------------
-
-    matched_categories = []
-
-    for category, details in keywords.items():
-
-        for keyword in details["keywords"]:
-
-            if keyword in user_prompt:
-
-                matched_categories.append({
-                    "category": category,
-                    "priority": details["priority"]
-                })
-
-                break
-
-    # --------------------------------------------------------
-    # No category found
-    # --------------------------------------------------------
-
-    if not matched_categories:
-
+    except guard.Refusal as refusal:
         return {
             "success": False,
-            "error": "Could not determine the task category."
+            "allowed": False,
+            "decision": "refused",
+            "status": "rejected",
+            "reason": refusal.reason,
+            **refusal.detail,
         }
 
-    # --------------------------------------------------------
-    # Select highest-priority category
-    # --------------------------------------------------------
 
-    matched_categories.sort(
-        key=lambda x: x["priority"],
-        reverse=True
-    )
+def get_capabilities() -> Dict:
+    """
+    What AEGIS can pay for — used by the UI and by the no-match response.
+    """
 
-    selected_category = matched_categories[0]["category"]
-
-    # --------------------------------------------------------
-    # Select API
-    # --------------------------------------------------------
-
-    selected_api = apis[selected_category][0]
-
-    # --------------------------------------------------------
-    # Run AEGIS guardrails
-    # --------------------------------------------------------
-
-    guardrail_result = evaluate_payment(
-        selected_api["provider"],
-        selected_api["cost"]
-    )
-
-    decision = guardrail_result["decision"]
-
-    # --------------------------------------------------------
-    # Determine initial status
-    # --------------------------------------------------------
-
-    if decision == "human_review":
-
-        status = "pending"
-        decision_by = "Guardrails"
-
-    elif decision == "approved":
-
-        status = "approved"
-        decision_by = "Guardrails"
-
-    else:
-
-        status = "rejected"
-        decision_by = "Guardrails"
-
-    # --------------------------------------------------------
-    # Create payment request
-    # --------------------------------------------------------
-
-    payment_request = {
-
-        "task": user_prompt,
-
-        "provider": selected_api["provider"],
-
-        "api": selected_api["name"],
-
-        "amount": selected_api["cost"],
-
-        "category": selected_category,
-
-        # Guardrail decision
-        "decision": decision,
-
-        # Risk information
-        "riskLevel": guardrail_result["riskLevel"],
-
-        # Explanation
-        "reason": guardrail_result["reason"],
-
-        # Individual policy checks
-        "checks": guardrail_result["checks"],
-
-        # Current lifecycle status
-        "status": status,
-
-        # Who made the current decision
-        "decisionBy": decision_by,
+    return {
+        "providers": catalog.KNOWN_PROVIDERS,
+        "categories": catalog.describe_capabilities(),
     }
-
-    # --------------------------------------------------------
-    # Save request to AEGIS request history
-    #
-    # add_request() generates the request ID.
-    # --------------------------------------------------------
-
-    saved_request = add_request(payment_request)
-    print("🔥 SELECTOR REACHED BLOCKCHAIN CHECK")
-    print("DECISION:", decision)
-    print("SAVED REQUEST:", saved_request)
-    # --------------------------------------------------------
-    # Blockchain audit
-    #
-    # Only FINAL decisions are recorded immediately.
-    #
-    # approved  → blockchain
-    # blocked   → blockchain
-    # human_review → wait for user
-    # --------------------------------------------------------
-
-    if decision in ["approved", "blocked"]:
-
-        print("🔥 CALLING BLOCKCHAIN")
-
-        create_blockchain_record(
-            saved_request
-        )
-
-
-    # ------------------------------------------------------------
-    # Automatically create a transaction for approved requests
-    # ------------------------------------------------------------
-
-    if decision == "approved":
-
-        print("💳 CREATING PAYMENT")
-        print(
-            "REQUEST ID:",
-            saved_request["id"]
-        )
-
-        payment = create_payment_request(
-            request_id=saved_request["id"],
-            task=saved_request["task"],
-            provider=saved_request["provider"],
-            api=saved_request["api"],
-            amount=float(
-                saved_request["amount"]
-            ),
-        )
-
-        print(
-            "💳 PAYMENT CREATED:",
-            payment["payment_id"]
-        )
-
-        print(
-            "🔗 TRANSACTION CREATED:",
-            payment["transaction_id"]
-        )
-
-    # --------------------------------------------------------
-    # Return saved request
-    # --------------------------------------------------------
-
-    return saved_request

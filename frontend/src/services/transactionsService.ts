@@ -1,6 +1,5 @@
 import type { Transaction } from '@/types'
-
-const API_BASE_URL = 'https://aegis-backend-lx1z.onrender.com'
+import { API_BASE_URL } from '@/config'
 
 export async function fetchTransactions(): Promise<Transaction[]> {
   const response = await fetch(`${API_BASE_URL}/transactions`)

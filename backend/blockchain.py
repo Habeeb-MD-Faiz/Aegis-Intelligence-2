@@ -1,15 +1,36 @@
 import hashlib
 import json
+import os
+import tempfile
+import threading
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List
+
+import anchor
+import config
 
 
 # ============================================================
 # Configuration
 # ============================================================
 
-BLOCKCHAIN_FILE = Path(__file__).parent / "blockchain.json"
+BLOCKCHAIN_FILE = config.LEDGER_FILE
+
+
+# ============================================================
+# Concurrency
+# ============================================================
+#
+# Appending a block is a read-modify-write over the whole file. Two concurrent
+# requests could previously both load the same chain, both append at the same
+# block number, and the second write would silently discard the first — losing
+# an audit record and breaking the hash linkage.
+#
+# The whole sequence now runs under one lock, and writes are atomic: we write a
+# temporary file in the same directory and os.replace() it, which is atomic on
+# POSIX and Windows. A crash mid-write can no longer truncate the ledger.
+
+_chain_lock = threading.RLock()
 
 
 # ============================================================
@@ -41,16 +62,32 @@ def _load_chain() -> List[Dict]:
 
 def _save_chain(chain: List[Dict]) -> None:
     """
-    Persist the entire chain to disk.
+    Persist the entire chain to disk atomically.
     """
 
-    with open(BLOCKCHAIN_FILE, "w", encoding="utf-8") as f:
-        json.dump(
-            chain,
-            f,
-            indent=2,
-            ensure_ascii=False
-        )
+    BLOCKCHAIN_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    handle, temporary_path = tempfile.mkstemp(
+        dir=str(BLOCKCHAIN_FILE.parent),
+        prefix=".ledger-",
+        suffix=".tmp",
+    )
+
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as f:
+            json.dump(chain, f, indent=2, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+
+        os.replace(temporary_path, BLOCKCHAIN_FILE)
+
+    except BaseException:
+        # Never leave a stray temp file behind on failure.
+        try:
+            os.unlink(temporary_path)
+        except OSError:
+            pass
+        raise
 
 
 # ============================================================
@@ -83,10 +120,17 @@ def create_blockchain_record(request: Dict) -> Dict:
     for a finalized payment request.
 
     This function should ONLY be called after a final decision.
-    """
-    print("🔥 BLOCKCHAIN FUNCTION CALLED")
-    print("REQUEST:", request)
 
+    The load-append-save sequence holds a lock for its whole duration, so two
+    concurrent decisions cannot claim the same block number or overwrite each
+    other's record.
+    """
+
+    with _chain_lock:
+        return _append_block(request)
+
+
+def _append_block(request: Dict) -> Dict:
     chain = _load_chain()
 
     # Prevent duplicate records for the same request.
@@ -151,6 +195,12 @@ def create_blockchain_record(request: Dict) -> Dict:
     chain.append(block)
 
     _save_chain(chain)
+
+    # Periodically commit the chain head to Base Sepolia so local history
+    # cannot be rewritten without also altering a record we do not control.
+    # Best-effort: a slow testnet must never block a payment decision.
+    if config.ANCHORING_ENABLED and block_number % config.ANCHOR_EVERY == 0:
+        anchor.anchor_head(block_number, block_hash)
 
     return block
 
@@ -321,4 +371,8 @@ def get_blockchain_stats() -> Dict:
         "verifiedBlocks": verification["verifiedBlocks"],
         "tamperedBlocks": verification["tamperedBlocks"],
         "latestBlock": chain[-1] if chain else None,
+
+        # Reported so the UI can state the ledger's real security posture
+        # rather than implying a distributed chain that does not exist.
+        "anchoring": anchor.status(),
     }

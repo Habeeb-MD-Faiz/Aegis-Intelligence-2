@@ -1,6 +1,8 @@
 import { approvals, paymentRequests } from '@/data/payments'
 import { withFlakiness } from './api'
 
+import { API_BASE_URL } from '@/config'
+
 import type {
   Approval,
   PaymentRequest,
@@ -10,8 +12,6 @@ import type {
 /* -------------------------------------------------------------------------- */
 /* Configuration                                                              */
 /* -------------------------------------------------------------------------- */
-
-const API_BASE_URL = 'https://aegis-backend-lx1z.onrender.com'
 
 /* -------------------------------------------------------------------------- */
 /* Local stores                                                               */

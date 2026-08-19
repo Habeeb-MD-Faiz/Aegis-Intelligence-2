@@ -1,8 +1,7 @@
 import { policies } from '@/data/governance'
 import { withFlakiness } from './api'
 import type { Policy } from '@/types'
-
-const API_BASE_URL = 'https://aegis-backend-lx1z.onrender.com'
+import { API_BASE_URL, operatorHeaders } from '@/config'
 
 let store = [...policies]
 
@@ -208,15 +207,21 @@ export async function applyPolicySuggestion(
     {
       method: 'POST',
 
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      // Control plane: a suggestion only takes effect when a human applies it
+      // with an operator credential. Nothing here applies itself.
+      headers: operatorHeaders(),
 
       body: JSON.stringify(suggestion),
     }
   )
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        'Operator credential required to apply policy changes.',
+      )
+    }
+
     throw new Error(
       'Failed to apply policy suggestion'
     )

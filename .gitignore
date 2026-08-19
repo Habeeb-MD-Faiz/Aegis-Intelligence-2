@@ -11,6 +11,10 @@ backend.venv/
 .env.*
 backend/.env
 
+# ...but templates are meant to be committed
+!.env.example
+!**/.env.example
+
 # Node
 node_modules/
 dist/
@@ -27,3 +31,12 @@ Thumbs.db
 
 # Logs
 *.log
+# AEGIS runtime state
+backend/aegis.db
+backend/aegis.db-journal
+*.db-journal
+
+# Build artifacts (generated from the .ts sources)
+frontend/vite.config.js
+frontend/vite.config.d.ts
+*.tsbuildinfo

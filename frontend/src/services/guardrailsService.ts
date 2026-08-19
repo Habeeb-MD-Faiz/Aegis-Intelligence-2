@@ -1,6 +1,5 @@
 import type { Guardrail } from '@/types'
-
-const API_BASE_URL = 'https://aegis-backend-lx1z.onrender.com'
+import { API_BASE_URL, operatorHeaders } from '@/config'
 
 export async function fetchGuardrails(): Promise<Guardrail[]> {
   const response = await fetch(
@@ -23,9 +22,9 @@ export async function toggleGuardrail(
     {
       method: 'POST',
 
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      // Control plane: arming and disarming guardrails needs an operator
+      // credential. Agents are rejected here by construction.
+      headers: operatorHeaders(),
 
       body: JSON.stringify({
         enabled,
@@ -34,6 +33,12 @@ export async function toggleGuardrail(
   )
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        'Operator credential required to change guardrails.',
+      )
+    }
+
     throw new Error('Failed to update guardrail')
   }
 

@@ -1,0 +1,15 @@
+---
+description: AEGIS project context — architecture, invariants, and how to run it
+alwaysApply: true
+---
+
+The full agent context for this repository lives in **[AGENTS.md](../../AGENTS.md)**
+at the repo root. Read it before making changes.
+
+It covers what AEGIS is, the invariants that must not be broken (credential
+custody, catalog-bound payees, fail closed, control/data plane separation, no
+LLM in the enforcement path), the module map, how to run and test, and the
+current real-vs-simulated state.
+
+`CLAUDE.md` is a byte-identical copy of `AGENTS.md`. Edit `AGENTS.md` and run
+`python scripts/sync_agent_docs.py`; CI fails if they drift.
