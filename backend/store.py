@@ -155,18 +155,6 @@ def load_payment(payment_id: str) -> Optional[Dict]:
     return json.loads(row["data"]) if row else None
 
 
-def payments_for_request(request_id: str) -> List[Dict]:
-    connection = connect()
-
-    with _lock:
-        rows = connection.execute(
-            "SELECT data FROM payments WHERE request_id = ?",
-            (request_id,),
-        ).fetchall()
-
-    return [json.loads(row["data"]) for row in rows]
-
-
 # ============================================================
 # MAINTENANCE
 # ============================================================

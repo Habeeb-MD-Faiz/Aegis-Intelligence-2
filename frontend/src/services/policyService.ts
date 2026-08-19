@@ -128,20 +128,6 @@ export async function savePolicy(
 }
 
 
-export async function deletePolicy(
-  id: string
-): Promise<void> {
-  store = store.filter(
-    (p) => p.id !== id
-  )
-
-  return withFlakiness(
-    undefined,
-    0
-  )
-}
-
-
 // ============================================================
 // AI POLICY SUGGESTIONS
 // ============================================================

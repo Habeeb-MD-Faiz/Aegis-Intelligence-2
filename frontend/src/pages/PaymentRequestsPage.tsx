@@ -13,7 +13,6 @@ import { useAsync } from '@/hooks/useAsync'
 import { fetchPaymentRequests, decidePaymentRequest } from '@/services/paymentsService'
 import { useToast } from '@/contexts/ToastContext'
 import type { PaymentRequest } from '@/types'
-// import { useTask } from '@/contexts/TaskContext'
 
 const tabs = [
   { label: 'All', value: 'all' },
@@ -25,31 +24,9 @@ const tabs = [
 export function PaymentRequestsPage() {
   const { data, loading, error, refetch, setData } = useAsync(fetchPaymentRequests)
   const { showToast } = useToast()
-  // const { taskResult } = useTask()
   const [tab, setTab] = useState('all')
   const [selected, setSelected] = useState<PaymentRequest | null>(null)
 
-  // const filtered = (data ?? []).filter((p) => tab === 'all' || p.status === tab)
-  // const paymentRows = [...(data ?? [])]
-
-  // if (taskResult) {
-  //   paymentRows.unshift({
-  //     id: 'PAY-LATEST',
-  //     vendor: taskResult.task,          // shows the user's request
-  //     agentId: 'AEGIS',
-  //     amount: taskResult.amount,
-  //     currency: 'USD',
-  //     category: taskResult.category,
-  //     status: 'pending',
-  //     riskLevel: taskResult.riskLevel,
-  //     createdAt: new Date().toISOString(),
-  //     memo: taskResult.reason,
-  //   })
-  // }
-
-  // const filtered = paymentRows.filter(
-  //   (p) => tab === 'all' || p.status === tab
-  // )
   const paymentRows = [...(data ?? [])]
 
   const filtered = paymentRows.filter((p) => {

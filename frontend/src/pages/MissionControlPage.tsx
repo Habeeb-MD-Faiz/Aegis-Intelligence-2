@@ -90,7 +90,6 @@ export function MissionControlPage() {
 
   // -- Task composer state ---------------------------------------------------
   const [taskInput, setTaskInput] = useState('')
-  // const [taskResult, setTaskResult] = useState<any>(null)
   const { taskResult, setTaskResult } = useTask()
   const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>('idle')
   const [currentStepIndex, setCurrentStepIndex] = useState(-1)
@@ -132,43 +131,8 @@ export function MissionControlPage() {
 
 
     try {
-      // const result = await taskPromise
-
-      // console.log('Backend Response:', result)
-      // setTaskResult(result)
-      // setExecutionStatus('complete')
-
-      // // Small delay so user sees success
-      // // setTimeout(() => {
-      // //   navigate(ROUTES.paymentRequests)
-
-      // //   // Later we'll pass `result`
-      // //   // to the Payment Requests page.
-      // // }, 800)
-
-      // // Small delay so user sees success
-      //   setTimeout(() => {
-
-      //     if (result.decision === 'approved') {
-      //       console.log('Auto approved')
-
-      //       // Later:
-      //       // navigate(ROUTES.taskExecution)
-      //     }
-
-      //     else if (result.decision === 'human_review') {
-      //       navigate(ROUTES.paymentRequests)
-      //     }
-
-      //     else if (result.decision === 'blocked') {
-      //       alert(`Blocked by Guardrails\n\n${result.reason}`)
-      //     }
-
-      //   }, 800)
 
       const result = await taskPromise
-
-      console.log("Backend Response:", result)
 
       if (result.decision === "blocked") {
 
@@ -184,8 +148,6 @@ export function MissionControlPage() {
         setTaskResult(result)
 
         setExecutionStatus("complete")
-
-        // Later we'll execute the task directly
 
         return
       }
@@ -427,35 +389,3 @@ export function MissionControlPage() {
     </AppShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Temporary local mock data for the new task-oriented dashboard sections.
-// These stand in for real "recent task" records until the backend for
-// /select-api and the task history endpoint exist.
-// ---------------------------------------------------------------------------
-
-// const TASKS_EXECUTED_TODAY = 12
-
-// interface RecentTask {
-//   id: string
-//   title: string
-//   status: 'Completed' | 'Awaiting Approval' | 'Processing' | 'Failed'
-//   detail: string
-//   risk?: RiskLevel
-// }
-
-// const taskStatusTone: Record<RecentTask['status'], 'success' | 'warning' | 'info' | 'danger'> = {
-//   Completed: 'success',
-//   'Awaiting Approval': 'warning',
-//   Processing: 'info',
-//   Failed: 'danger',
-// }
-
-// const RECENT_TASKS: RecentTask[] = [
-//   { id: 'task-1', title: 'Research Tesla Earnings', status: 'Completed', detail: 'Used Bloomberg API', risk: 'low' },
-//   { id: 'task-2', title: 'Flight Booking — Singapore', status: 'Awaiting Approval', detail: 'Estimated cost: ₹1,250', risk: 'medium' },
-//   { id: 'task-3', title: 'Competitive Analysis Report', status: 'Completed', detail: 'Used SEC EDGAR + NewsAPI', risk: 'low' },
-//   { id: 'task-4', title: 'Cybersecurity News Summary', status: 'Completed', detail: 'Used NewsAPI', risk: 'low' },
-//   { id: 'task-5', title: 'Dataset Analysis & Deck', status: 'Processing', detail: 'Preparing presentation', risk: 'low' },
-//   { id: 'task-6', title: 'Vendor Contract Review', status: 'Failed', detail: 'API quota exceeded', risk: 'high' },
-// ]

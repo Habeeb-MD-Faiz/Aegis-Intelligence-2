@@ -64,24 +64,12 @@ def add_provider(provider: str) -> Dict:
     return policy_config
 
 
-def remove_provider(provider: str) -> Dict:
-    if provider in policy_config["allowed_providers"]:
-        policy_config["allowed_providers"].remove(provider)
-
-    return policy_config
-
-
 # ============================================================
 # LIMITS
 # ============================================================
 
 def update_auto_approve_limit(limit: float) -> Dict:
     policy_config["auto_approve_limit"] = limit
-    return policy_config
-
-
-def update_human_review_limit(limit: float) -> Dict:
-    policy_config["human_review_limit"] = limit
     return policy_config
 
 

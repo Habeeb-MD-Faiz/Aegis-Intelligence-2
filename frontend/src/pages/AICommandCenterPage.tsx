@@ -6,7 +6,6 @@ import { StatCard } from '@/components/ui/StatCard'
 import { StatusBadge, RiskBadge } from '@/components/ui/Badge'
 import { Table, type Column } from '@/components/ui/Table'
 import type { PaymentRequest } from '@/types'
-// import { Icon } from '@/components/icons/Icon'
 import { Input } from '@/components/ui/Input'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { ErrorState } from '@/components/ui/ErrorState'
@@ -15,7 +14,6 @@ import {
   fetchPaymentRequests,
   fetchDashboardStats,
 } from '@/services/paymentsService'
-// import type { Agent } from '@/types'
 
 
 export function AICommandCenterPage() {
@@ -28,44 +26,6 @@ export function AICommandCenterPage() {
       r.vendor.toLowerCase().includes(query.toLowerCase()) ||
       r.category.toLowerCase().includes(query.toLowerCase()),
   )
-
-  // const columns: Column<Agent>[] = [
-  //   {
-  //     header: 'Agent',
-  //     key: 'name',
-  //     render: (a) => (
-  //       <div>
-  //         <p className="font-medium text-ink">{a.name}</p>
-  //         <p className="font-mono text-caption text-ink-faint">{a.id}</p>
-  //       </div>
-  //     ),
-  //   },
-  //   { header: 'Status', key: 'status', render: (a) => <StatusBadge status={a.status} /> },
-  //   { header: 'Risk', key: 'riskLevel', render: (a) => <RiskBadge level={a.riskLevel} /> },
-  //   {
-  //     header: 'Coherence',
-  //     key: 'coherence',
-  //     align: 'right',
-  //     render: (a) => <span className="font-mono">{a.coherence}%</span>,
-  //   },
-  //   {
-  //     header: 'Spend today',
-  //     key: 'spendToday',
-  //     align: 'right',
-  //     render: (a) => <span className="font-mono">${a.spendToday.toLocaleString()}</span>,
-  //   },
-  //   { header: 'Last active', key: 'lastActive', align: 'right' },
-  //   {
-  //     header: '',
-  //     key: 'actions',
-  //     align: 'right',
-  //     render: () => (
-  //       <button className="focus-ring rounded-md p-1.5 text-ink-faint hover:bg-surface-high hover:text-ink">
-  //         <Icon name="more_horiz" size={18} />
-  //       </button>
-  //     ),
-  //   },
-  // ]
 
   const columns: Column<PaymentRequest>[] = [
     {
@@ -121,9 +81,6 @@ export function AICommandCenterPage() {
       ),
     },
   ]
-  // const runningCount = (agentsState.data ?? []).filter((a) => a.status === 'running').length
-  // const errorCount = (agentsState.data ?? []).filter((a) => a.status === 'error').length
-  // const totalSpend = (agentsState.data ?? []).reduce((s, a) => s + a.spendToday, 0)
 
   return (
     <AppShell title="AI Command Center" breadcrumb="Operate">

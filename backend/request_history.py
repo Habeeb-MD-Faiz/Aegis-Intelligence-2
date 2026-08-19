@@ -74,10 +74,6 @@ def get_requests() -> List[Dict]:
     return store.load_requests()
 
 
-def get_request(request_id: str) -> Optional[Dict]:
-    return store.load_request(request_id)
-
-
 # ============================================================
 # DERIVED FIGURES
 # ============================================================
@@ -165,20 +161,6 @@ def decide_request(request_id: str, decision: str) -> Optional[Dict]:
     create_blockchain_record(request)
 
     return {**request, "alreadyDecided": False}
-
-
-def update_request(request_id: str, status: str, decision_by: str) -> Optional[Dict]:
-    request = store.load_request(request_id)
-
-    if request is None:
-        return None
-
-    request["status"] = status
-    request["decisionBy"] = decision_by
-
-    store.save_request(request)
-
-    return request
 
 
 # ============================================================

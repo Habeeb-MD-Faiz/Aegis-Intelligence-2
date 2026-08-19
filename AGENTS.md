@@ -97,6 +97,45 @@ wrong.
 
 ---
 
+## Dormant on purpose — don't "fix" these
+
+Things that look like bugs or oversights but are deliberate. Left in place
+knowingly; if you change them, change this list too.
+
+### The login flow is disconnected
+
+`frontend/src/pages/LoginPage.tsx` and `AIWorkspacePage.tsx` exist but are
+**not** in the route table in `App.tsx`, and `ROUTES.login` / `ROUTES.workspace`
+map to no page. Commit `17f2382` ("Open dashboard without login") disconnected
+them on purpose so the public demo opens straight onto the dashboard rather
+than a login wall.
+
+Consequences, all intentional:
+
+- `AuthContext` is still mounted and used by `Sidebar` and `SettingsPage`, but
+  its `user` can never be set through the UI. Both read it defensively — the
+  sidebar shows "Guest" and Settings shows "—". Nothing crashes.
+- `authService.login()` is unreachable from the app; only `getStoredSession()`
+  does anything, and only if something already wrote to `localStorage`.
+
+**Do not delete this to tidy up, and do not wire it back on without asking.**
+Re-enabling login means judges and reviewers hit an auth wall on the deployed
+demo, which is the exact thing that commit removed. If it is ever restored it
+needs a demo-mode bypass.
+
+Note this is *frontend* auth only — cosmetic identity for the dashboard. It is
+unrelated to `AEGIS_OPERATOR_TOKEN` / `AEGIS_AGENT_TOKEN`, which are the real
+security boundary and are enforced server-side in `identity.py`.
+
+### A native `alert()` in Mission Control
+
+`MissionControlPage` uses `alert()` when a task is blocked by guardrails. The
+app has a toast system (`useToast`) that would be nicer, but the alert is
+deliberately loud — during a demo, a blocked payment should be impossible to
+miss. Swap it only if someone decides the demo reads better that way.
+
+---
+
 ## Layout
 
 ### Backend (`backend/`, FastAPI)

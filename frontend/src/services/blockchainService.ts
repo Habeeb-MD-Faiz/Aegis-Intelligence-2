@@ -1,15 +1,4 @@
-import { blockchainNodes, blocks } from '@/data/governance'
-import { withFlakiness } from './api'
-import type { BlockchainNode, BlockEntry } from '@/types'
 import { API_BASE_URL } from '@/config'
-
-export async function fetchBlockchainNodes(): Promise<BlockchainNode[]> {
-  return withFlakiness([...blockchainNodes])
-}
-
-export async function fetchBlocks(): Promise<BlockEntry[]> {
-  return withFlakiness([...blocks])
-}
 
 export interface BlockchainBlock {
   blockNumber: number
@@ -72,21 +61,6 @@ export async function verifyBlockchain(): Promise<BlockchainVerification> {
 
   if (!response.ok) {
     throw new Error("Failed to verify blockchain")
-  }
-
-  return response.json()
-}
-
-
-export async function fetchBlockchainBlock(
-  blockNumber: number
-): Promise<BlockchainBlock> {
-  const response = await fetch(
-    `${API_BASE_URL}/blockchain/${blockNumber}`
-  )
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch blockchain block")
   }
 
   return response.json()

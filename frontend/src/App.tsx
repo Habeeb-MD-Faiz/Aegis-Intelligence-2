@@ -16,6 +16,8 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuditLogsPage } from '@/pages/AuditLogsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
+// LoginPage and AIWorkspacePage exist but are deliberately absent from this
+// table — see "Dormant on purpose" in AGENTS.md.
 const routeTable: Record<string, () => JSX.Element> = {
   [ROUTES.mission]: MissionControlPage,
   [ROUTES.commandCenter]: AICommandCenterPage,
