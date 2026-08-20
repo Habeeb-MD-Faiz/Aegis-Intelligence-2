@@ -10,6 +10,12 @@ Read this first. It is written for a coding agent picking the repo up cold,
 and it tells you what the project is, what must not be broken, and where to
 look.
 
+**Auditing or reviewing this codebase?** Read
+[docs/AUDIT-BRIEF.md](docs/AUDIT-BRIEF.md) as well. It records what has already
+been audited and fixed, what looks wrong but was verified as deliberate, and
+where a fresh pair of eyes is actually likely to find something — so your
+report is about findings rather than re-discoveries.
+
 ---
 
 ## What this is

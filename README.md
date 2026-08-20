@@ -430,6 +430,7 @@ behavioural risk scoring, ledger anchoring. Genuinely ahead:
 | [SETUP.md](docs/SETUP.md) | Install, configure, deploy, troubleshoot |
 | [OPERATING.md](docs/OPERATING.md) | Operator guide — reading decisions, approving requests, guardrails |
 | [DEMO.md](docs/DEMO.md) | Demo runbook and anticipated questions |
+| [AUDIT-BRIEF.md](docs/AUDIT-BRIEF.md) | For code auditors — what's already been checked, what's deliberate, where to look |
 | [deck/index.html](docs/deck/index.html) | The pitch deck — 15 slides, opens offline |
 
 ---
