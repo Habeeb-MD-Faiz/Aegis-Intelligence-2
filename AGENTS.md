@@ -95,8 +95,11 @@ wrong.
 
 7. **Never claim something that isn't true.** If anchoring isn't configured, the
    API says so. Settled payments are labelled `settlement_mode: "simulated"`.
-   Docs separate real from simulated. Keep it that way — the honesty is a
-   feature, and it is the thing that survives scrutiny.
+   Docs separate real from simulated. The dashboard reads `GET /config` and
+   reports the real posture — including an open plane or a guard configured to
+   fail open. It used to show a hardcoded "System Optimal" that said so even
+   with the backend down. Keep it that way — the honesty is a feature, and it
+   is the thing that survives scrutiny.
 
 8. **Decisions are idempotent.** Deciding an already-final request must not
    create a second payment.
@@ -180,6 +183,10 @@ the loading/error/refetch hook used by every page.
   eight different error styles, and that string is what pages render in
   `ErrorState`. Add a call here, not another `fetch`.
 - `src/config.ts` — single source for API URL and operator credential.
+- `src/components/layout/SystemPosture.tsx` and the `GuardStatus` badge in
+  `TopBar.tsx` — the backend's self-reported security posture. Both read
+  `useSystemConfig()`, which shares a single `GET /config` request. Don't
+  replace either with a static label.
 - `src/services/` — one module per domain. Some read the backend, some still
   read fixtures (see below).
 - `src/constants/nav.ts` — `MOCK_BACKED_ROUTES` marks fixture-backed screens.

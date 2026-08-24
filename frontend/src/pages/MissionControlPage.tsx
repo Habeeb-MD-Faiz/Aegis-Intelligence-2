@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
+import { SystemPosture } from '@/components/layout/SystemPosture'
 import { StatCard } from '@/components/ui/StatCard'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Badge, RiskBadge } from '@/components/ui/Badge'
@@ -187,10 +188,7 @@ export function MissionControlPage() {
 
   return (
     <AppShell title="Mission Control" breadcrumb="Operate">
-      <div className="mb-6 flex items-center gap-2 text-label uppercase tracking-widest text-success">
-        <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-success" />
-        System Status: Optimal
-      </div>
+      <SystemPosture />
 
       {/* AI Task Composer — primary entry point */}
       <div className="mb-8 rounded-xl border border-border bg-gradient-to-br from-surface-low to-surface p-8">

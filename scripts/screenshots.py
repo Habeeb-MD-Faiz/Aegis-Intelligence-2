@@ -2,10 +2,12 @@
 """
 Regenerate the README screenshots from a live local stack.
 
-Run this on a machine with a normal desktop browser. Headless environments
-often fail to load the Material Symbols icon font, which makes every nav item
-render as its ligature name ("space_dashboard" instead of the icon) — the
-screenshots come out looking broken even though the app is fine.
+Headless environments often fail to load the Material Symbols icon font over
+the network, which makes every nav item render as its ligature name
+("space_dashboard" instead of the icon). This script fetches the font itself
+and injects it as a data URI, so it produces correct screenshots headlessly —
+no desktop browser needed. If the font cannot be fetched or does not take, it
+refuses to write rather than committing broken images.
 
     # 1. terminal one — backend, seeded, CORS open to the preview server
     cd backend
@@ -25,7 +27,7 @@ dashboards have something real to show.
 """
 
 import argparse
-import subprocess
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -34,16 +36,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "screenshots"
 
-# route -> committed screenshot filename
+# route -> committed screenshot filename, matching what README.md embeds
 PAGES = [
-    ("#/", "command_center"),
+    ("#/", "mission_control"),
+    ("#/command-center", "command_center"),
     ("#/payments", "requests"),
     ("#/guardrails", "guardrails"),
-    ("#/policies", "policy builder"),
+    ("#/policies", "policy_builder"),
     ("#/blockchain", "blockchain"),
     ("#/transactions", "transaction"),
     ("#/approvals", "user_approval"),
+    ("#/analytics", "analytics"),
 ]
+
+# Material Symbols, fetched once and injected as a data URI. Loading it from
+# fonts.googleapis.com inside a headless browser is the thing that used to make
+# these screenshots come out as ligature text.
+FONT_CSS_URL = (
+    "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+)
 
 # A few tasks that exercise different outcomes: auto-approved, escalated,
 # and one that trips the provider allow list.
@@ -82,6 +93,59 @@ def seed_activity(api: str) -> None:
     print("  done")
 
 
+def icon_font_css() -> str:
+    """
+    Material Symbols as a self-contained @font-face, or "" if unreachable.
+
+    The !important is load-bearing: the app already declares its own
+    @font-face pointing at fonts.gstatic.com, and in a headless browser that
+    one resolves but never paints. Ours has to win.
+    """
+
+    import base64
+    import re
+
+    try:
+        request = urllib.request.Request(
+            FONT_CSS_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        css = urllib.request.urlopen(request, timeout=30).read().decode()
+
+        match = re.search(r"https://fonts\.gstatic\.com[^)]+", css)
+
+        if not match:
+            return ""
+
+        font = urllib.request.urlopen(match.group(0), timeout=60).read()
+
+    except Exception as exc:
+        print(f"  ! could not fetch the icon font: {exc}")
+        return ""
+
+    encoded = base64.b64encode(font).decode()
+
+    return (
+        "@font-face{font-family:'Material Symbols Outlined';font-style:normal;"
+        f"font-weight:400;src:url(data:font/ttf;base64,{encoded}) "
+        "format('truetype');}"
+        ".material-symbols-outlined{font-family:'Material Symbols Outlined' "
+        "!important;}"
+    )
+
+
+# Whether an icon rendered cannot be read from innerText — that returns the
+# ligature name ("space_dashboard") whether it painted as a glyph or as the
+# literal word. Measuring the box is the only honest check: a glyph is roughly
+# square at the font size, the spelled-out word is far wider.
+GLYPH_CHECK = """() => {
+  const el = document.querySelector('.material-symbols-outlined');
+  if (!el) return { ok: false, reason: 'no icon element on the page' };
+  const width = el.getBoundingClientRect().width;
+  return { ok: width > 0 && width < 40, reason: `glyph box ${width.toFixed(1)}px` };
+}"""
+
+
 def capture(app: str, scale: int) -> int:
     try:
         from playwright.sync_api import sync_playwright
@@ -93,17 +157,31 @@ def capture(app: str, scale: int) -> int:
 
     OUT.mkdir(exist_ok=True)
 
+    print("Fetching the icon font ...")
+    font_css = icon_font_css()
+
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        # Some environments ship a Chromium that Playwright did not download
+        # itself, so its expected build number will not match. Point at it
+        # with AEGIS_CHROMIUM rather than re-downloading a browser.
+        executable = os.environ.get("AEGIS_CHROMIUM")
+
+        browser = (
+            p.chromium.launch(executable_path=executable)
+            if executable
+            else p.chromium.launch()
+        )
         page = browser.new_page(
             viewport={"width": 1600, "height": 1000},
             device_scale_factor=scale,
         )
 
-        broken_icons = False
-
         for route, name in PAGES:
             page.goto(f"{app}/{route}", wait_until="networkidle")
+
+            if font_css:
+                page.add_style_tag(content=font_css)
+
             page.evaluate("document.fonts.ready")
             page.wait_for_timeout(2500)
 
@@ -115,20 +193,24 @@ def capture(app: str, scale: int) -> int:
                 browser.close()
                 return 1
 
-            if "space_dashboard" in body:
-                broken_icons = True
+            if "Backend unreachable" in body:
+                print(f"  ✗ {name}: the backend is not reachable from the browser.")
+                print("    Check VITE_API_BASE_URL and AEGIS_CORS_ORIGINS.")
+                browser.close()
+                return 1
+
+            glyph = page.evaluate(GLYPH_CHECK)
+
+            if not glyph["ok"]:
+                print(f"  ✗ {name}: the icon font did not render ({glyph['reason']}).")
+                print("    Every nav item would come out as ligature text.")
+                browser.close()
+                return 1
 
             page.screenshot(path=str(OUT / f"{name}.png"))
             print(f"  ✓ {name}.png")
 
         browser.close()
-
-    if broken_icons:
-        print()
-        print("⚠️  The icon font did not render — nav items show as ligature")
-        print("   text. These screenshots are not usable. Run this on a")
-        print("   desktop machine with normal font loading.")
-        return 1
 
     print(f"\nWrote {len(PAGES)} screenshots to {OUT}/")
     return 0

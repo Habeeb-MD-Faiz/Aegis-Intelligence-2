@@ -43,6 +43,7 @@ against the old behaviour. Re-reporting them means you are reading old code.
 | `.skeleton` referenced `animation: shimmer`, but the keyframe was defined in `tailwind.config.ts` and tree-shaken from every build (no `animate-shimmer` utility exists) — every loading skeleton sat still | Keyframe moved into `index.css` | verified in the built CSS |
 | `Transaction` required `hash`, `agentId`, `from`, `to`, `blockHeight`, `confirmations`, `networkFee` and `steps` — nothing produced or read them, and `response.json()` as `any` hid the mismatch | Type trimmed to the shape `/transactions` returns | `npx tsc --noEmit` |
 | `new Date(created_at ?? timestamp)` rendered the literal string "Invalid Date" when a record carried neither | Falls back to `—` | — |
+| The dashboard hardcoded "System Optimal" — in the body of Mission Control and in the top bar of *every* screen. It said so with the backend unreachable, both planes open, and `AEGIS_GUARD_FAIL_OPEN` set | Both now read `GET /config`; a guard set to fail open is reported in red | verified in a browser across four postures |
 
 ```bash
 cd backend && python -m pytest -q      # 75 tests
@@ -149,7 +150,7 @@ us the stated description is *wrong* would be.
 | x402 settlement | Simulated. State machine real, no funds move, `PAY_TO_ADDRESS` is the zero address |
 | On-chain anchoring | Built; signing and signature recovery unit-tested offline against a fake RPC. **The live broadcast has never run** — needs a funded Base Sepolia key |
 | Incident Center · Audit Logs · Approval Center | Fixture-backed. Marked in `MOCK_BACKED_ROUTES`, hideable via `VITE_HIDE_MOCK_SCREENS` |
-| Both planes open by default | Deliberate for the public demo. `GET /config` reports the real posture. Setting `AEGIS_OPERATOR_TOKEN` closes the control plane |
+| Both planes open by default | Deliberate for the public demo, and **stated in the UI** — the posture strip on Mission Control and the top-bar badge read `GET /config`, so an open plane is shown as open. Setting `AEGIS_OPERATOR_TOKEN` closes the control plane |
 | Per-agent policy | Not implemented. Limits are global; records carry `agentId` for a future version |
 | Free-tier ephemeral disk | SQLite and the ledger reset when the host recycles the instance |
 | The decision ledger | `backend/blockchain.json` is runtime state and is **not** tracked in git. A fresh start rebuilds a verifiable chain from `seed.ensure_demo_data()` — see `test_seeding_produces_a_verifiable_chain` |
