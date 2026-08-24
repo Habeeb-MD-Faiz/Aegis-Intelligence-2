@@ -1,13 +1,13 @@
+"""
+Request bodies for the x402 routes.
+
+Only the shapes the API actually binds live here. Two more once described
+protocol responses that the code never constructed or validated — the routes
+return plain dicts from payment_service — so they documented nothing and
+validated nothing.
+"""
+
 from pydantic import BaseModel
-from typing import Optional
-
-
-class PaymentRequirements(BaseModel):
-    amount: float
-    currency: str = "USDC"
-    network: str = "Base Sepolia"
-    pay_to: str
-    description: str
 
 
 class PaymentRequest(BaseModel):
@@ -22,14 +22,3 @@ class PaymentRequest(BaseModel):
 class PaymentAuthorization(BaseModel):
     request_id: str
     payment_signature: str
-
-
-class PaymentResponse(BaseModel):
-    payment_id: str
-    request_id: str
-    status: str
-    amount: float
-    currency: str
-    network: str
-    transaction_hash: Optional[str] = None
-    message: str

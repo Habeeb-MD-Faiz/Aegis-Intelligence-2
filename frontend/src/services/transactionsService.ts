@@ -1,15 +1,8 @@
 import type { Transaction } from '@/types'
-import { API_BASE_URL } from '@/config'
+import { requestJson } from './api'
 
 export async function fetchTransactions(): Promise<Transaction[]> {
-  const response = await fetch(`${API_BASE_URL}/transactions`)
-
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Failed to fetch transactions: ${text}`)
-  }
-
-  const data = await response.json()
+  const data = await requestJson<any[]>('/transactions')
 
   return data.map((r: any) => ({
     id: r.id,

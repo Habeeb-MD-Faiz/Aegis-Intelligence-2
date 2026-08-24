@@ -290,7 +290,7 @@ Never commit API keys or wallet credentials. `.env` is gitignored;
 ## 🧪 Tests
 
 ```bash
-cd backend && python -m pytest -q      # 67 tests
+cd backend && python -m pytest -q      # 75 tests
 ```
 
 | File | Covers |
@@ -359,7 +359,7 @@ aegis/
 │   ├── selector.py            # legacy /execute-task → guard
 │   ├── main.py                # FastAPI routes
 │   ├── demo_injection.py      # ▶ the demo — runs without a server
-│   ├── test_guard.py · test_agent.py · test_anchor.py     # 67 tests
+│   ├── test_guard.py · test_agent.py · test_anchor.py     # 75 tests
 │   └── x402/                  # payment lifecycle (settlement simulated)
 ├── frontend/
 │   ├── src/config.ts          # single source for API URL + credentials

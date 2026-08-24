@@ -48,7 +48,7 @@ cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload            # http://127.0.0.1:8000, docs at /docs
 
-# tests — 67, all should pass
+# tests — 75, all should pass
 python -m pytest -q
 
 # the demo — no server, no network, no API key needed
@@ -175,6 +175,10 @@ Hand-rolled — no router, no query library, no chart library. `RouterContext` i
 ~50 lines over `window.location.hash`; charts are hand-drawn SVG; `useAsync` is
 the loading/error/refetch hook used by every page.
 
+- `src/services/api.ts` — `requestJson()` is the **only** place a backend call
+  is made. There were fifteen hand-written `fetch`/`.ok`/`.json()` copies with
+  eight different error styles, and that string is what pages render in
+  `ErrorState`. Add a call here, not another `fetch`.
 - `src/config.ts` — single source for API URL and operator credential.
 - `src/services/` — one module per domain. Some read the backend, some still
   read fixtures (see below).
@@ -211,7 +215,7 @@ settlement is stubbed and `PAY_TO_ADDRESS` is the zero address. No funds move.
 
 ## Tests
 
-67 tests, all passing. Run `python -m pytest -q` from `backend/`.
+75 tests, all passing. Run `python -m pytest -q` from `backend/`.
 
 | File | Covers |
 |---|---|
@@ -258,6 +262,14 @@ old behaviour. A security property gets a test that proves it.
   frameworks or abstractions added without a clear reason.
 - **Config over constants.** Anything environment-dependent goes in `config.py`
   with an env override and an entry in `.env.example`.
+- **Adding a policy suggestion type means three places**: the `Literal` in
+  `policy_builder.py`, `_SCALAR_SETTINGS` in `policy_store.py`, and the union in
+  `frontend/src/services/policyService.ts`. The Literal is the model's
+  instruction set — anything named there will be emitted, and anything without a
+  handler surfaces as an error when an operator clicks Apply.
+  `test_every_advertised_suggestion_type_can_be_applied` fails if they drift.
+- **Dependencies:** `backend/requirements.txt` is direct dependencies only.
+  Don't paste a `pip freeze` back into it.
 - **Commits** describe what changed and why, in prose. Reference the behaviour,
   not the file list.
 - **Update the docs in the same change.** The honesty tables appear in five
@@ -279,6 +291,10 @@ old behaviour. A security property gets a test that proves it.
   `os.replace`. Don't add a write path that bypasses it.
 - **Seed data is dated to previous days** on purpose, so it never consumes
   today's budget or frequency window. Keep that if you change `seed.py`.
+- **Seeding also writes ledger blocks**, so a fresh clone opens on a non-empty,
+  verifiable chain. `backend/blockchain.json` is runtime state and is *not*
+  tracked in git — it used to be, which meant every local run produced a diff
+  and two branches produced a merge conflict.
 - **Frequency and spend are derived from timestamps**, not counters. There is no
   counter to reset — an earlier version had one that never reset and blocked the
   third request forever.

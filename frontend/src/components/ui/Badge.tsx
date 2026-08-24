@@ -30,7 +30,10 @@ export function Badge({ children, tone = 'neutral', dot = false, className = '' 
   )
 }
 
-const riskTone: Record<RiskLevel, Tone> = {
+// Exported: the design system owns risk -> colour. PolicyBuilderPage kept a
+// byte-identical private copy, which is how two screens end up disagreeing
+// about what "high" looks like after someone tunes one of them.
+export const riskTone: Record<RiskLevel, Tone> = {
   low: 'success',
   medium: 'warning',
   high: 'danger',

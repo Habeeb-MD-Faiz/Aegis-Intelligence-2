@@ -45,6 +45,22 @@
     @apply outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
   }
 
+  /*
+    The keyframe lives here rather than in tailwind.config.ts. Tailwind only
+    emits a keyframe when the matching utility (animate-shimmer) appears in a
+    scanned file, and nothing uses it — .skeleton references the animation by
+    name from plain CSS. Defined in the config, it was tree-shaken out of every
+    build and the skeleton loaders sat completely still.
+  */
+  @keyframes shimmer {
+    0% {
+      background-position: -400px 0;
+    }
+    100% {
+      background-position: 400px 0;
+    }
+  }
+
   .skeleton {
     @apply relative overflow-hidden bg-surface-high rounded-md;
     background-image: linear-gradient(

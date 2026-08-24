@@ -124,14 +124,19 @@ export interface PaymentRequest {
 // Transactions
 // ---------------------------------------------------------------------------
 
+/**
+ * A transaction as `GET /transactions` actually returns it.
+ *
+ * This interface used to additionally require `hash`, `agentId`, `from`, `to`,
+ * `blockHeight`, `confirmations`, `networkFee` and a `steps: TransactionStep[]`
+ * pipeline — left over from a fixture that no longer exists. Nothing produced
+ * them and nothing read them; the mismatch was invisible because the service
+ * parsed the response as `any` before mapping it. Keep this shape honest
+ * against the backend.
+ */
 export interface Transaction {
   id: string
 
-  // Basic transaction information
-  hash: string
-  agentId: string
-  from: string
-  to: string
   amount: number
   currency: string
 
@@ -161,34 +166,12 @@ export interface Transaction {
   network?: string
   pay_to?: string
 
-  // Blockchain information
-  blockHeight: number
-  confirmations: number
-  networkFee: number
-
   // Timestamps
-  timestamp: string
+  timestamp?: string
   created_at?: string
   settled_at?: string | null
-
-  steps: TransactionStep[]
 }
-// ---------------------------------------------------------------------------
-// Transaction Pipeline Steps
-// ---------------------------------------------------------------------------
 
-export interface TransactionStep {
-  id: string
-  label: string
-
-  status:
-    | 'complete'
-    | 'active'
-    | 'pending'
-
-  timestamp?: string
-  detail?: string
-}
 
 
 // ---------------------------------------------------------------------------

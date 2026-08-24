@@ -1,46 +1,25 @@
 import type { Guardrail } from '@/types'
-import { API_BASE_URL, operatorHeaders } from '@/config'
+import { requestJson } from './api'
+import { operatorHeaders } from '@/config'
 
-export async function fetchGuardrails(): Promise<Guardrail[]> {
-  const response = await fetch(
-    `${API_BASE_URL}/guardrails`
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch guardrails')
-  }
-
-  return response.json()
+export function fetchGuardrails(): Promise<Guardrail[]> {
+  return requestJson<Guardrail[]>('/guardrails')
 }
 
-export async function toggleGuardrail(
+export function toggleGuardrail(
   id: string,
   enabled: boolean
 ): Promise<Guardrail> {
-  const response = await fetch(
-    `${API_BASE_URL}/guardrails/${id}/toggle`,
-    {
-      method: 'POST',
+  return requestJson<Guardrail>(`/guardrails/${id}/toggle`, {
+    method: 'POST',
 
-      // Control plane: arming and disarming guardrails needs an operator
-      // credential. Agents are rejected here by construction.
-      headers: operatorHeaders(),
+    // Control plane: arming and disarming guardrails needs an operator
+    // credential. Agents are rejected here by construction — requestJson
+    // reports the 401/403 as a credential problem rather than a server fault.
+    headers: operatorHeaders(),
 
-      body: JSON.stringify({
-        enabled,
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(
-        'Operator credential required to change guardrails.',
-      )
-    }
-
-    throw new Error('Failed to update guardrail')
-  }
-
-  return response.json()
+    body: JSON.stringify({
+      enabled,
+    }),
+  })
 }

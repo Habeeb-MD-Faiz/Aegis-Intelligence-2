@@ -35,7 +35,20 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _parse(timestamp: str) -> Optional[datetime]:
+def parse_timestamp(timestamp: str) -> Optional[datetime]:
+    """
+    Read a record's `createdAt` into an aware datetime, or None if unreadable.
+
+    This is the *only* timestamp parser in the codebase, and deliberately so:
+    risk.py imports it rather than keeping its own copy. The module that
+    records spend and the module that scores it must never disagree about what
+    a timestamp means, or about where the day boundary falls.
+
+    The `.replace("Z", ...)` is redundant on Python 3.11+, which parses a
+    trailing Z natively. It is kept because it is free and the deploy target's
+    runtime is not pinned.
+    """
+
     if not timestamp:
         return None
 
@@ -78,6 +91,32 @@ def get_requests() -> List[Dict]:
 # DERIVED FIGURES
 # ============================================================
 
+def _since(cutoff: datetime, status: Optional[str] = None) -> List[Dict]:
+    """
+    Records created at or after `cutoff`, optionally filtered by status.
+
+    Both derived figures share this traversal so a change to how a record's
+    timestamp is read cannot make the budget and the frequency window disagree
+    about which requests are in scope. The *filters* stay different on purpose
+    — see each caller.
+    """
+
+    selected = []
+
+    for request in get_requests():
+        if status is not None and request.get("status") != status:
+            continue
+
+        created = parse_timestamp(request.get("createdAt", ""))
+
+        if created is None or created < cutoff:
+            continue
+
+        selected.append(request)
+
+    return selected
+
+
 def spend_today() -> float:
     """
     Total approved spend in the current UTC day.
@@ -89,15 +128,7 @@ def spend_today() -> float:
     start_of_day = _now().replace(hour=0, minute=0, second=0, microsecond=0)
     total = 0.0
 
-    for request in get_requests():
-        if request.get("status") != "approved":
-            continue
-
-        created = _parse(request.get("createdAt", ""))
-
-        if created is None or created < start_of_day:
-            continue
-
+    for request in _since(start_of_day, status="approved"):
         try:
             total += float(request.get("amount", 0))
 
@@ -111,20 +142,13 @@ def requests_in_window(hours: int = 24) -> int:
     """
     How many requests were submitted in the trailing window.
 
-    Derived from timestamps rather than a counter, so it self-heals over time
-    and needs no reset endpoint or scheduled job.
+    Counts *every* status, unlike spend_today — a refused request still
+    consumed a slot in the frequency window. Derived from timestamps rather
+    than a counter, so it self-heals over time and needs no reset endpoint or
+    scheduled job.
     """
 
-    cutoff = _now() - timedelta(hours=hours)
-    count = 0
-
-    for request in get_requests():
-        created = _parse(request.get("createdAt", ""))
-
-        if created is not None and created >= cutoff:
-            count += 1
-
-    return count
+    return len(_since(_now() - timedelta(hours=hours)))
 
 
 # ============================================================

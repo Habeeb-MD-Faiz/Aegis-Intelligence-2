@@ -26,7 +26,7 @@ more mature security position.
 ## Before you start
 
 - [ ] `cd backend && python demo_injection.py` — rehearse it once
-- [ ] `python -m pytest -q` — 67 passing, have it on a tab
+- [ ] `python -m pytest -q` — 75 passing, have it on a tab
 - [ ] `python anchor_preflight.py` if you're demoing anchoring — needs a funded key
 - [ ] Hit the deployed URL 5 minutes early so the dyno is awake
 - [ ] `VITE_HIDE_MOCK_SCREENS=true` in the demo build

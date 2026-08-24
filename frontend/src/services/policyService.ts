@@ -1,7 +1,7 @@
 import { policies } from '@/data/governance'
-import { withFlakiness } from './api'
+import { fixture, requestJson } from './api'
 import type { Policy } from '@/types'
-import { API_BASE_URL, operatorHeaders } from '@/config'
+import { operatorHeaders } from '@/config'
 
 let store = [...policies]
 
@@ -11,15 +11,7 @@ let store = [...policies]
 // ============================================================
 
 export async function fetchPolicies(): Promise<Policy[]> {
-  const response = await fetch(
-    `${API_BASE_URL}/policies`
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch policies')
-  }
-
-  const config = await response.json()
+  const config = await requestJson<any>('/policies')
 
   const backendPolicies: Policy[] = [
     {
@@ -121,10 +113,7 @@ export async function savePolicy(
       )
     : [policy, ...store]
 
-  return withFlakiness(
-    policy,
-    0
-  )
+  return fixture(policy)
 }
 
 
@@ -133,13 +122,13 @@ export async function savePolicy(
 // ============================================================
 
 export interface PolicySuggestion {
+  // Mirrors the Literal in backend/policy_builder.py. Every member must have a
+  // handler in backend/policy_store.py — see the note there.
   suggestion_type:
     | 'spending_limit'
     | 'provider_allowlist'
     | 'frequency_limit'
-    | 'category_limit'
     | 'daily_budget'
-    | 'risk_rule'
 
   title: string
 
@@ -170,26 +159,16 @@ export interface PolicySuggestionsResponse {
 }
 
 
-export async function fetchPolicySuggestions(): Promise<PolicySuggestionsResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/policy-suggestions`
-  )
-
-  if (!response.ok) {
-    throw new Error(
-      'Failed to generate policy suggestions'
-    )
-  }
-
-  return response.json()
+export function fetchPolicySuggestions(): Promise<PolicySuggestionsResponse> {
+  return requestJson<PolicySuggestionsResponse>('/policy-suggestions')
 }
 
 
 export async function applyPolicySuggestion(
   suggestion: PolicySuggestion
 ) {
-  const response = await fetch(
-    `${API_BASE_URL}/policies/apply`,
+  return requestJson<{ success: boolean; message: string; config: unknown }>(
+    '/policies/apply',
     {
       method: 'POST',
 
@@ -198,20 +177,6 @@ export async function applyPolicySuggestion(
       headers: operatorHeaders(),
 
       body: JSON.stringify(suggestion),
-    }
+    },
   )
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(
-        'Operator credential required to apply policy changes.',
-      )
-    }
-
-    throw new Error(
-      'Failed to apply policy suggestion'
-    )
-  }
-
-  return response.json()
 }

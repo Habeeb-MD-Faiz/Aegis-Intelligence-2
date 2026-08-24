@@ -44,26 +44,3 @@ export function operatorHeaders(): Record<string, string> {
 
   return headers
 }
-
-/**
- * What the backend reports about its own security posture, so the UI can show
- * the real state instead of implying guarantees that are not configured.
- */
-export interface SystemConfig {
-  controlPlaneLocked: boolean
-  dataPlaneLocked: boolean
-  anchoringEnabled: boolean
-  chainName: string
-  llmEnabled: boolean
-  guardFailOpen: boolean
-}
-
-export async function fetchSystemConfig(): Promise<SystemConfig> {
-  const response = await fetch(`${API_BASE_URL}/config`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch system configuration')
-  }
-
-  return response.json()
-}

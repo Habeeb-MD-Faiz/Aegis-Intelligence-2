@@ -14,7 +14,9 @@ Everything below is verifiable from the repo. Where a claim can be checked with
 a command, the command is given. **Do not take this file's word for anything —
 it exists to tell you where to look, not to tell you what to conclude.**
 
-Last full audit: the eight commits from `656ad9c` through `84e4442`.
+Last full audit: the eight commits from `656ad9c` through `84e4442`, plus an
+external over-engineering pass whose accepted findings are applied — see the
+table in section 1 and the dependency note in section 2.
 
 ---
 
@@ -37,9 +39,13 @@ against the old behaviour. Re-reporting them means you are reading old code.
 | Ledger append was an unserialised read-modify-write; concurrent decisions could claim the same block number | Lock + atomic `os.replace` | — |
 | Catalog files loaded from relative paths — app only started from `backend/` | Absolute paths | — |
 | Policy mutation was unauthenticated | Control/data plane split | `test_agent_token_is_rejected_on_the_control_plane` |
+| `policy_builder` advertised `category_limit` and `risk_rule` to the LLM; `policy_store` rejected both, so an operator clicking Apply got "Unsupported policy suggestion type" on the control plane | Schema trimmed to the four the store handles; a dispatch table now makes the two checkable against each other | `test_every_advertised_suggestion_type_can_be_applied` |
+| `.skeleton` referenced `animation: shimmer`, but the keyframe was defined in `tailwind.config.ts` and tree-shaken from every build (no `animate-shimmer` utility exists) — every loading skeleton sat still | Keyframe moved into `index.css` | verified in the built CSS |
+| `Transaction` required `hash`, `agentId`, `from`, `to`, `blockHeight`, `confirmations`, `networkFee` and `steps` — nothing produced or read them, and `response.json()` as `any` hid the mismatch | Type trimmed to the shape `/transactions` returns | `npx tsc --noEmit` |
+| `new Date(created_at ?? timestamp)` rendered the literal string "Invalid Date" when a record carried neither | Falls back to `—` | — |
 
 ```bash
-cd backend && python -m pytest -q      # 67 tests
+cd backend && python -m pytest -q      # 75 tests
 ```
 
 ---
@@ -50,17 +56,21 @@ Every item here was investigated during the audit and found to be correct or
 deliberate. If you disagree, say so with the specific evidence that changes the
 conclusion — but do not report these as fresh discoveries.
 
-### `requirements.txt` pins with no visible import
+### `requirements.txt` lists only direct dependencies
 
-`uvicorn`, `python-dotenv`, `groq`, `langsmith`, `websockets`, `uuid_utils` do
-not appear in any `import` statement. They are not dead:
+It was a 57-line `pip freeze` of every transitive. That is unmaintainable —
+bumping `fastapi` means hand-re-resolving `starlette`, `anyio`, `h11` and
+`sniffio` — and it hid which packages were actually chosen. It is now the nine
+direct dependencies, pinned, with pip resolving the rest.
 
-- `uvicorn` is the ASGI server, invoked from the command line.
-- `python-dotenv` is used via `load_dotenv()` in `policy_builder.py`.
-- `groq`, `langsmith`, `websockets`, `uuid_utils` are transitive dependencies of
-  `langchain-groq`.
+Two entries still have no `import`: `uvicorn` is the ASGI server and is invoked
+from the command line, and `python-dotenv` is used via `load_dotenv()` in
+`policy_builder.py`. Neither is dead.
 
-The one pin that *was* genuinely unused — `x402` — has already been removed.
+**Still open:** `langchain-core` / `langchain-groq` are carried for two
+`.invoke()` calls (`policy_builder.py`, `agent.py`'s `LlmBrain`). The `groq`
+SDK — already present as a transitive — covers both via
+`response_format={"type": "json_schema"}`. Deferred deliberately, not missed.
 
 ### `config.py` reads the environment once, at import time
 
@@ -142,6 +152,7 @@ us the stated description is *wrong* would be.
 | Both planes open by default | Deliberate for the public demo. `GET /config` reports the real posture. Setting `AEGIS_OPERATOR_TOKEN` closes the control plane |
 | Per-agent policy | Not implemented. Limits are global; records carry `agentId` for a future version |
 | Free-tier ephemeral disk | SQLite and the ledger reset when the host recycles the instance |
+| The decision ledger | `backend/blockchain.json` is runtime state and is **not** tracked in git. A fresh start rebuilds a verifiable chain from `seed.ensure_demo_data()` — see `test_seeding_produces_a_verifiable_chain` |
 
 ---
 
@@ -183,7 +194,7 @@ leaks into somewhere that implies a real transfer, that is a real finding.
 
 ```bash
 cd backend
-python -m pytest -q                    # 67 tests
+python -m pytest -q                    # 75 tests
 python demo_injection.py               # no server, no network, no API key
 python -c "import main; print(len(main.app.routes))"   # boots with zero config
 

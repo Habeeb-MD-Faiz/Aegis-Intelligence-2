@@ -1,11 +1,11 @@
 import { agents, agentLog } from '@/data/agents'
-import { withFlakiness } from './api'
+import { fixture } from './api'
 import type { Agent, AgentLogEntry } from '@/types'
 
 export async function fetchAgents(): Promise<Agent[]> {
-  return withFlakiness([...agents])
+  return fixture([...agents])
 }
 
 export async function fetchAgentLog(agentId: string): Promise<AgentLogEntry[]> {
-  return withFlakiness(agentLog.filter((l) => l.agentId === agentId))
+  return fixture(agentLog.filter((l) => l.agentId === agentId))
 }

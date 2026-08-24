@@ -15,4 +15,4 @@ Key invariants that must never be violated:
 - No LLM in the enforcement or risk-scoring path — both must be deterministic.
 - Never claim a capability the code does not have.
 
-Run tests with `cd backend && python -m pytest -q` (67 tests).
+Run tests with `cd backend && python -m pytest -q` (75 tests).

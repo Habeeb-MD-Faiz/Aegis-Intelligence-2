@@ -36,6 +36,11 @@ backend/aegis.db
 backend/aegis.db-journal
 *.db-journal
 
+# The decision ledger is rewritten by every run. It used to be tracked, which
+# meant every local start produced a diff and two branches produced a merge
+# conflict. A fresh start rebuilds a verifiable chain from seed.ensure_demo_data().
+backend/blockchain.json
+
 # Build artifacts (generated from the .ts sources)
 frontend/vite.config.js
 frontend/vite.config.d.ts

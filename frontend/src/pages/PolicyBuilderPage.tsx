@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardHeader } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
+import { Badge, riskTone } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/icons/Icon'
 import { Input } from '@/components/ui/Input'
@@ -22,13 +22,6 @@ import {
   applyPolicySuggestion,
   type PolicySuggestion,
 } from '@/services/policyService'
-
-const severityTone: Record<RiskLevel, 'success' | 'warning' | 'danger'> = {
-  low: 'success',
-  medium: 'warning',
-  high: 'danger',
-  critical: 'danger',
-}
 
 function emptyPolicy(): Policy {
   return {
@@ -392,7 +385,7 @@ export function PolicyBuilderPage() {
               />
               <p className="mb-4 text-body-sm text-ink-muted">{policy.description}</p>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Badge tone={severityTone[policy.severity]}>{policy.severity} severity</Badge>
+                <Badge tone={riskTone[policy.severity]}>{policy.severity} severity</Badge>
                 <span className="text-caption text-ink-faint">{policy.rules.length} rule(s) · updated {policy.updatedAt}</span>
               </div>
             </Card>

@@ -15,6 +15,21 @@ import {
 import type { Transaction } from '@/types'
 
 
+// Both timestamps are optional — the backend sends created_at, older records
+// only carry timestamp, and a record may have neither. new Date(undefined)
+// renders the string "Invalid Date" straight into the page, so say nothing
+// instead.
+function formatCreated(transaction: Transaction): string {
+  const raw = transaction.created_at ?? transaction.timestamp
+
+  if (!raw) return '—'
+
+  const date = new Date(raw)
+
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()
+}
+
+
 export function TransactionDetailsPage() {
 
   const {
@@ -305,9 +320,7 @@ export function TransactionDetailsPage() {
               </p>
 
               <p className="mt-1 text-ink">
-                {new Date(
-                  active.created_at ?? active.timestamp
-                ).toLocaleString()}
+                {formatCreated(active)}
               </p>
 
             </div>

@@ -15,7 +15,7 @@ export function AppShell({ title, breadcrumb, children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar title={title} breadcrumb={breadcrumb} />
         <main className="flex-1 overflow-y-auto">
-          <div className="container-max mx-auto max-w-[1440px] px-6 py-6">{children}</div>
+          <div className="mx-auto max-w-[1440px] px-6 py-6">{children}</div>
         </main>
       </div>
     </div>

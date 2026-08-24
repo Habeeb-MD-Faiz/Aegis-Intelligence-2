@@ -27,7 +27,7 @@ annotates a decision, it does not make one.
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
-from request_history import get_requests
+from request_history import get_requests, parse_timestamp
 
 
 # ============================================================
@@ -51,19 +51,6 @@ DEVIATION_MULTIPLE = 3.0
 
 MEDIUM_AT = 25
 HIGH_AT = 50
-
-
-def _parse(timestamp: str) -> Optional[datetime]:
-    if not timestamp:
-        return None
-
-    try:
-        parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-
-    except ValueError:
-        return None
-
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
 def _history_for(agent_id: str) -> List[Dict]:
@@ -147,7 +134,7 @@ def _velocity(history: List[Dict]) -> Optional[Dict]:
     recent = 0
 
     for record in history:
-        created = _parse(record.get("createdAt", ""))
+        created = parse_timestamp(record.get("createdAt", ""))
 
         if created and created >= cutoff:
             recent += 1
@@ -172,7 +159,7 @@ def _recent_refusals(history: List[Dict]) -> Optional[Dict]:
         if record.get("status") != "rejected":
             continue
 
-        created = _parse(record.get("createdAt", ""))
+        created = parse_timestamp(record.get("createdAt", ""))
 
         if created and created >= cutoff:
             refused += 1

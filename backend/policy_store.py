@@ -54,31 +54,6 @@ def get_policy_config() -> Dict:
 
 
 # ============================================================
-# PROVIDERS
-# ============================================================
-
-def add_provider(provider: str) -> Dict:
-    if provider not in policy_config["allowed_providers"]:
-        policy_config["allowed_providers"].append(provider)
-
-    return policy_config
-
-
-# ============================================================
-# LIMITS
-# ============================================================
-
-def update_auto_approve_limit(limit: float) -> Dict:
-    policy_config["auto_approve_limit"] = limit
-    return policy_config
-
-
-def update_daily_budget(limit: float) -> Dict:
-    policy_config["daily_budget"] = limit
-    return policy_config
-
-
-# ============================================================
 # GUARDRAIL TOGGLES
 # ============================================================
 
@@ -113,6 +88,30 @@ def _parse_money(raw) -> float:
         raise ValueError(f"Could not read a number from {raw!r}.") from exc
 
 
+# The four suggestion types that map to a single scalar setting. Keyed by the
+# type the LLM is allowed to emit, so this table and the Literal in
+# policy_builder.PolicySuggestion can be read against each other — an earlier
+# version had them drift, and the schema advertised two types that landed here
+# as "Unsupported policy suggestion type" when an operator clicked Apply.
+_SCALAR_SETTINGS = {
+    "spending_limit": (
+        "auto_approve_limit",
+        _parse_money,
+        "Autonomous approval limit updated to ${:,.0f}.",
+    ),
+    "daily_budget": (
+        "daily_budget",
+        _parse_money,
+        "Daily budget updated to ${:,.0f}.",
+    ),
+    "frequency_limit": (
+        "frequency_limit",
+        lambda raw: int(_parse_money(raw)),
+        "Frequency limit updated to {:,.0f} requests.",
+    ),
+}
+
+
 def apply_policy_suggestion(suggestion: dict) -> Dict:
     """
     Apply an operator-approved policy suggestion.
@@ -129,6 +128,8 @@ def apply_policy_suggestion(suggestion: dict) -> Dict:
     if suggested_value is None or str(suggested_value).strip() == "":
         raise ValueError("Suggestion does not contain a value.")
 
+    # The allow list is the one type that appends to a collection rather than
+    # replacing a scalar, and the one that can be a no-op.
     if suggestion_type == "provider_allowlist":
         provider = str(suggested_value).strip()
 
@@ -139,7 +140,7 @@ def apply_policy_suggestion(suggestion: dict) -> Dict:
                 "config": policy_config,
             }
 
-        add_provider(provider)
+        policy_config["allowed_providers"].append(provider)
 
         return {
             "success": True,
@@ -147,33 +148,14 @@ def apply_policy_suggestion(suggestion: dict) -> Dict:
             "config": policy_config,
         }
 
-    if suggestion_type == "spending_limit":
-        value = _parse_money(suggested_value)
-        update_auto_approve_limit(value)
+    if suggestion_type in _SCALAR_SETTINGS:
+        key, parse, message = _SCALAR_SETTINGS[suggestion_type]
+        value = parse(suggested_value)
+        policy_config[key] = value
 
         return {
             "success": True,
-            "message": f"Autonomous approval limit updated to ${value:,.0f}.",
-            "config": policy_config,
-        }
-
-    if suggestion_type == "daily_budget":
-        value = _parse_money(suggested_value)
-        update_daily_budget(value)
-
-        return {
-            "success": True,
-            "message": f"Daily budget updated to ${value:,.0f}.",
-            "config": policy_config,
-        }
-
-    if suggestion_type == "frequency_limit":
-        value = int(_parse_money(suggested_value))
-        policy_config["frequency_limit"] = value
-
-        return {
-            "success": True,
-            "message": f"Frequency limit updated to {value} requests.",
+            "message": message.format(value),
             "config": policy_config,
         }
 

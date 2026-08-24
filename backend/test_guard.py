@@ -347,3 +347,159 @@ def test_requests_survive_a_reload():
     store._connection = None  # force a fresh connection, as a restart would
 
     assert len(request_history.get_requests()) == 1
+
+
+# ============================================================
+# POLICY SUGGESTIONS
+# ============================================================
+
+def test_every_advertised_suggestion_type_can_be_applied():
+    """
+    The Literal in policy_builder is the LLM's instruction set: anything named
+    there will eventually be emitted. Two types were once advertised with no
+    handler behind them, so an operator who clicked Apply got "Unsupported
+    policy suggestion type" from the control plane.
+
+    This test fails if the schema and the applier ever drift again.
+    """
+
+    import typing
+
+    import policy_builder
+
+    advertised = set(
+        typing.get_args(
+            policy_builder.PolicySuggestion.model_fields["suggestion_type"].annotation
+        )
+    )
+
+    assert advertised, "could not read the suggestion Literal"
+
+    values = {
+        "provider_allowlist": "SomeNewProvider",
+        "spending_limit": "$250",
+        "daily_budget": "$7,500",
+        "frequency_limit": "40",
+    }
+
+    for suggestion_type in advertised:
+        assert suggestion_type in values, (
+            f"{suggestion_type} is advertised to the model but this test has no "
+            "sample value — add a handler in policy_store and a value here."
+        )
+
+        result = policy_store.apply_policy_suggestion(
+            {
+                "suggestion_type": suggestion_type,
+                "suggested_value": values[suggestion_type],
+            }
+        )
+
+        assert result["success"] is True
+
+
+def test_a_zero_value_is_still_applied():
+    result = policy_store.apply_policy_suggestion(
+        {"suggestion_type": "daily_budget", "suggested_value": "0"}
+    )
+
+    assert result["success"] is True
+    assert policy_store.policy_config["daily_budget"] == 0
+
+
+def test_an_absent_value_is_refused():
+    with pytest.raises(ValueError):
+        policy_store.apply_policy_suggestion(
+            {"suggestion_type": "daily_budget", "suggested_value": ""}
+        )
+
+
+def test_an_unknown_suggestion_type_is_refused():
+    with pytest.raises(ValueError):
+        policy_store.apply_policy_suggestion(
+            {"suggestion_type": "risk_rule", "suggested_value": "anything"}
+        )
+
+
+def test_provider_allowlist_does_not_duplicate_an_existing_provider():
+    provider = policy_store.policy_config["allowed_providers"][0]
+    before = len(policy_store.policy_config["allowed_providers"])
+
+    result = policy_store.apply_policy_suggestion(
+        {"suggestion_type": "provider_allowlist", "suggested_value": provider}
+    )
+
+    assert result["success"] is True
+    assert len(policy_store.policy_config["allowed_providers"]) == before
+
+
+def test_spend_and_frequency_read_the_same_records():
+    """
+    spend_today and requests_in_window share one traversal but keep different
+    filters: spend counts approved requests only, frequency counts every
+    status. A refused request consumes a frequency slot but no budget.
+    """
+
+    request_history.add_request(
+        {"id": "a", "status": "approved", "amount": 40, "createdAt": _iso_now()}
+    )
+    request_history.add_request(
+        {"id": "b", "status": "rejected", "amount": 500, "createdAt": _iso_now()}
+    )
+
+    assert request_history.spend_today() == 40
+    assert request_history.requests_in_window() == 2
+
+
+def _iso_now():
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
+
+
+# ============================================================
+# SEEDING
+# ============================================================
+
+def test_seeding_produces_a_verifiable_chain(monkeypatch):
+    """
+    Replaces the CI job that verified a committed blockchain.json. That job
+    checked whatever a developer had last happened to commit; this builds the
+    chain from the seed and verifies it, which is the property that actually
+    matters — a fresh clone opens on a non-empty, intact ledger.
+    """
+
+    import blockchain
+    import seed
+
+    monkeypatch.setattr(config, "SEED_DEMO_DATA", True)
+
+    written = seed.ensure_demo_data()
+
+    assert written > 0
+
+    result = blockchain.verify_blockchain()
+
+    assert result["valid"] is True
+    assert result["blocks"] > 0
+    assert result["tamperedBlocks"] == 0
+
+    # Only decided requests are anchored; a pending one is not.
+    final = [
+        record
+        for record in request_history.get_requests()
+        if record.get("status") in request_history.FINAL_STATUSES
+    ]
+
+    assert result["blocks"] == len(final)
+
+
+def test_seeding_is_idempotent(monkeypatch):
+    import seed
+
+    monkeypatch.setattr(config, "SEED_DEMO_DATA", True)
+
+    first = seed.ensure_demo_data()
+
+    assert first > 0
+    assert seed.ensure_demo_data() == 0

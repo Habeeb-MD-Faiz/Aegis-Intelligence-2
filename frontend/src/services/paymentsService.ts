@@ -1,7 +1,5 @@
 import { approvals, paymentRequests } from '@/data/payments'
-import { withFlakiness } from './api'
-
-import { API_BASE_URL } from '@/config'
+import { fixture, requestJson } from './api'
 
 import type {
   Approval,
@@ -21,22 +19,11 @@ let approvalsStore = [...approvals]
 let paymentsStore = [...paymentRequests]
 
 /* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function getErrorMessage(response: Response, fallback: string): Promise<string> {
-  return response
-    .text()
-    .then((text) => text || fallback)
-    .catch(() => fallback)
-}
-
-/* -------------------------------------------------------------------------- */
 /* Approvals                                                                  */
 /* -------------------------------------------------------------------------- */
 
 export async function fetchApprovals(): Promise<Approval[]> {
-  return withFlakiness([...approvalsStore])
+  return fixture([...approvalsStore])
 }
 
 export async function decideApproval(
@@ -55,7 +42,7 @@ export async function decideApproval(
     throw new Error('Approval not found')
   }
 
-  return withFlakiness(updated, 0)
+  return fixture(updated)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -63,20 +50,7 @@ export async function decideApproval(
 /* -------------------------------------------------------------------------- */
 
 export async function fetchPaymentRequests(): Promise<PaymentRequest[]> {
-  const response = await fetch(
-    `${API_BASE_URL}/requests`
-  )
-
-  if (!response.ok) {
-    const errorText = await getErrorMessage(
-      response,
-      'Failed to fetch requests'
-    )
-
-    throw new Error(errorText)
-  }
-
-  const data = await response.json()
+  const data = await requestJson<any[]>('/requests')
 
   return data.map((r: any) => ({
     id: r.id,
@@ -106,31 +80,15 @@ export async function decidePaymentRequest(
   id: string,
   decision: 'approved' | 'rejected'
 ): Promise<PaymentRequest> {
-  const response = await fetch(
-    `${API_BASE_URL}/requests/${id}/decision`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        decision,
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await getErrorMessage(
-      response,
-      'Failed to update request'
-    )
-
-    throw new Error(
-      `Failed to update request: ${errorText}`
-    )
-  }
-
-  const r = await response.json()
+  const r = await requestJson<any>(`/requests/${id}/decision`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      decision,
+    }),
+  })
 
   return {
     id: r.id,
@@ -168,35 +126,19 @@ export async function createPaymentRequest(
   data: CreatePaymentRequestInput
 ): Promise<PaymentExecution> {
 
-  const response = await fetch(
-    `${API_BASE_URL}/payments/request`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        request_id: data.requestId,
-        task: data.task,
-        provider: data.provider,
-        api: data.api,
-        amount: data.amount,
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await getErrorMessage(
-      response,
-      'Failed to create payment request'
-    )
-
-    throw new Error(
-      `Failed to create payment request: ${errorText}`
-    )
-  }
-
-  const r = await response.json()
+  const r = await requestJson<any>('/payments/request', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      request_id: data.requestId,
+      task: data.task,
+      provider: data.provider,
+      api: data.api,
+      amount: data.amount,
+    }),
+  })
 
   /*
    * The backend is the source of truth for these identifiers.
@@ -353,19 +295,6 @@ export interface DashboardStats {
   todaySpend: number
 }
 
-export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch(
-    `${API_BASE_URL}/dashboard`
-  )
-
-  if (!response.ok) {
-    const errorText = await getErrorMessage(
-      response,
-      'Failed to fetch dashboard stats'
-    )
-
-    throw new Error(errorText)
-  }
-
-  return response.json()
+export function fetchDashboardStats(): Promise<DashboardStats> {
+  return requestJson<DashboardStats>('/dashboard')
 }

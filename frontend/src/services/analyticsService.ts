@@ -10,7 +10,7 @@
  * output shape is unchanged, so AnalyticsPage did not need rewriting.
  */
 
-import { API_BASE_URL } from '@/config'
+import { requestJson } from './api'
 
 interface RequestRecord {
   id: string
@@ -25,14 +25,8 @@ interface RequestRecord {
   createdAt?: string
 }
 
-async function fetchRequests(): Promise<RequestRecord[]> {
-  const response = await fetch(`${API_BASE_URL}/requests`)
-
-  if (!response.ok) {
-    throw new Error('Failed to load analytics data')
-  }
-
-  return response.json()
+function fetchRequests(): Promise<RequestRecord[]> {
+  return requestJson<RequestRecord[]>('/requests')
 }
 
 function dayLabel(iso?: string): string {

@@ -47,7 +47,7 @@ cp .env.example .env.local
 
 ```bash
 cd backend
-python -m pytest -q        # 67 tests
+python -m pytest -q        # 75 tests
 ```
 
 | File | Covers |

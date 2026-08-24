@@ -34,13 +34,17 @@ from request_history import get_requests
 # ============================================================
 
 class PolicySuggestion(BaseModel):
+    # This list is the model's instruction set: anything named here will be
+    # emitted, so every entry must have a handler in
+    # policy_store._SCALAR_SETTINGS (or its allow-list special case). Two extra
+    # types were advertised here once with nothing behind them, and an operator
+    # clicking Apply got "Unsupported policy suggestion type" from the control
+    # plane. Add to both or neither.
     suggestion_type: Literal[
         "spending_limit",
         "provider_allowlist",
         "frequency_limit",
-        "category_limit",
         "daily_budget",
-        "risk_rule",
     ]
 
     title: str

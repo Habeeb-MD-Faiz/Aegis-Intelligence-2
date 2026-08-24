@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@/config'
+import { requestJson } from './api'
 
 export interface BlockchainBlock {
   blockNumber: number
@@ -34,34 +34,16 @@ export interface BlockchainVerification {
 }
 
 
-export async function fetchBlockchain(): Promise<BlockchainBlock[]> {
-  const response = await fetch(`${API_BASE_URL}/blockchain`)
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch blockchain")
-  }
-
-  return response.json()
+export function fetchBlockchain(): Promise<BlockchainBlock[]> {
+  return requestJson<BlockchainBlock[]>('/blockchain')
 }
 
 
-export async function fetchBlockchainStats(): Promise<BlockchainStats> {
-  const response = await fetch(`${API_BASE_URL}/blockchain/stats`)
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch blockchain stats")
-  }
-
-  return response.json()
+export function fetchBlockchainStats(): Promise<BlockchainStats> {
+  return requestJson<BlockchainStats>('/blockchain/stats')
 }
 
 
-export async function verifyBlockchain(): Promise<BlockchainVerification> {
-  const response = await fetch(`${API_BASE_URL}/blockchain/verify`)
-
-  if (!response.ok) {
-    throw new Error("Failed to verify blockchain")
-  }
-
-  return response.json()
+export function verifyBlockchain(): Promise<BlockchainVerification> {
+  return requestJson<BlockchainVerification>('/blockchain/verify')
 }

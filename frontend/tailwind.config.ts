@@ -5,6 +5,12 @@ import type { Config } from 'tailwindcss'
 // Single source of truth for color, type, radius and spacing across every
 // page. Derived from the canonical Stitch DESIGN.md, normalized into one
 // coherent dark enterprise theme (no more per-page palettes).
+//
+// Every token here is reachable from src/. Tokens nobody can use make
+// "is there a token for this?" stop having a trustworthy answer, so unused
+// ones are cut rather than kept speculatively. The shimmer keyframe used to
+// live here and was tree-shaken out of every build (no animate-shimmer
+// utility exists) while .skeleton referenced it — it is now in index.css.
 // ---------------------------------------------------------------------------
 
 export default {
@@ -19,14 +25,12 @@ export default {
       colors: {
         bg: {
           DEFAULT: '#0a0b0c',
-          raised: '#0d0f10',
         },
         surface: {
           DEFAULT: '#121414',
           low: '#0f1112',
           high: '#1a1c1c',
           highest: '#232525',
-          overlay: 'rgba(18,20,20,0.72)',
         },
         border: {
           DEFAULT: '#26282a',
@@ -78,7 +82,6 @@ export default {
         label: ['11px', { lineHeight: '1', letterSpacing: '0.08em', fontWeight: '600' }],
       },
       borderRadius: {
-        sm: '2px',
         DEFAULT: '4px',
         md: '6px',
         lg: '8px',
@@ -91,14 +94,10 @@ export default {
         md: '16px',
         lg: '24px',
         xl: '32px',
-        '2xl': '48px',
-        gutter: '24px',
-        'container-max': '1440px',
       },
       boxShadow: {
         card: '0 1px 2px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.02) inset',
         elevated: '0 8px 24px rgba(0,0,0,0.45)',
-        glow: '0 0 0 1px rgba(198,241,53,0.25), 0 0 24px rgba(198,241,53,0.15)',
       },
       transitionDuration: {
         DEFAULT: '160ms',
@@ -116,16 +115,11 @@ export default {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
-        shimmer: {
-          '0%': { backgroundPosition: '-400px 0' },
-          '100%': { backgroundPosition: '400px 0' },
-        },
       },
       animation: {
         'pulse-glow': 'pulse-glow 2.2s cubic-bezier(0.4,0,0.6,1) infinite',
         blink: 'blink 1s step-end infinite',
         'fade-in': 'fade-in 160ms ease-out',
-        shimmer: 'shimmer 1.6s linear infinite',
       },
     },
   },

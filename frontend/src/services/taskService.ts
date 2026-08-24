@@ -1,5 +1,4 @@
-import { ApiError } from './api'
-import { API_BASE_URL } from '@/config'
+import { requestJson } from './api'
 
 export interface ExecuteTaskRequest {
   message: string
@@ -23,10 +22,10 @@ export interface ExecuteTaskResponse {
   checks: GuardrailCheck[]
 }
 
-export async function executeTask(
+export function executeTask(
   message: string
 ): Promise<ExecuteTaskResponse> {
-  const response = await fetch(`${API_BASE_URL}/execute-task`, {
+  return requestJson<ExecuteTaskResponse>('/execute-task', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,10 +34,4 @@ export async function executeTask(
       message,
     }),
   })
-
-  if (!response.ok) {
-    throw new ApiError(`Backend request failed (${response.status})`)
-  }
-
-  return response.json()
 }

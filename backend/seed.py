@@ -10,6 +10,13 @@ budget or the current frequency window — so a seeded deployment behaves
 exactly like an empty one for any decision made during the demo.
 
 Seeding is idempotent and skipped entirely when history already exists.
+
+Final decisions are also written to the ledger, so a fresh clone opens on a
+non-empty, genuinely verifiable chain. The ledger used to be committed to git
+to achieve that, which meant a mutable runtime artifact — rewritten by every
+local run — was tracked as source, producing spurious diffs and merge
+conflicts. Deriving the chain from the seed at startup gives the same demo
+without keeping state in version control.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -18,6 +25,7 @@ from uuid import uuid4
 
 import config
 import store
+from blockchain import create_blockchain_record
 
 
 def _days_ago(days: int, hour: int = 10) -> str:
@@ -133,6 +141,11 @@ def ensure_demo_data() -> int:
 
     for record in records:
         store.save_request(record)
+
+        # Only final decisions belong in the ledger — a pending request has not
+        # been decided yet, and the guard writes it when it is.
+        if record.get("status") in ("approved", "rejected"):
+            create_blockchain_record(record)
 
     print(f"🌱 Seeded {len(records)} historical requests for the demo.")
 

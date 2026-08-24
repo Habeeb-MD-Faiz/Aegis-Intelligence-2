@@ -93,14 +93,6 @@ class SpendIntent(BaseModel):
     category: Optional[str] = None
 
 
-class PaymentRequestCreate(BaseModel):
-    request_id: str
-    task: str
-    provider: str
-    api: str
-    amount: float
-
-
 class PolicySuggestionPayload(BaseModel):
     """
     An operator-approved policy suggestion.
@@ -533,7 +525,10 @@ def execute_x402_payment(payment_id: str):
 # ============================================================================
 
 @app.post("/payments/request")
-def create_payment(data: PaymentRequestCreate):
+def create_payment(data: PaymentRequest):
+    # Deliberately the same model as POST /x402/payment: both routes feed
+    # create_payment_request, and a second field-identical model only meant
+    # two names for one shape in the OpenAPI schema.
     try:
         payment = create_payment_request(
             request_id=data.request_id,
