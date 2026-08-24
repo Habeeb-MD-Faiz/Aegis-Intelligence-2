@@ -82,7 +82,8 @@ Those are the problem statement's own words. Use them.
 ### 2:50 — Act 4: the record *(30s)*
 
 The ledger. Both decisions in it with reasons attached. Hit **Verify chain** —
-25+ blocks verified. If anchoring is on, show the Base Sepolia explorer link.
+every block verified, none tampered. If anchoring is on, show the Base Sepolia
+explorer link.
 
 Fifteen seconds. Don't linger, and don't call it a blockchain — say
 *tamper-evident decision ledger, anchored on Base Sepolia*.
@@ -174,6 +175,13 @@ purpose.
 | x402 lifecycle | Simulated — state machine real, settlement stubbed |
 | Value transfer | Not implemented |
 | Incidents / Audit Logs / Approvals | Fixture data (Analytics is live) |
+
+The posture strip at the top of the dashboard is worth ten seconds of this
+slide's time. It reads `GET /config` and reports that both planes are open on
+the demo deployment — a claim against ourselves, rendered by the product, not
+written on a slide. If someone asks "is any of this actually enforced?", that
+strip is the answer, and the fact that it is willing to say *open* is why the
+rest of it is worth believing.
 
 > "The governance engine, the decision flow and the ledger all run. Settlement
 > is simulated — we model the x402 lifecycle but don't move funds, because the

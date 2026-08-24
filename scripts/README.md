@@ -14,7 +14,7 @@ python scripts/sync_agent_docs.py --check   # exit 1 if they differ
 
 Enforced in two places, so drift can't land:
 
-- **CI** — the `agent-docs` job runs `--check` on every push and PR.
+- **CI** — the `backend` job runs `--check` on every push and PR.
 - **Optional git hook** — catch it before you push:
 
   ```bash
@@ -31,14 +31,26 @@ Regenerates the README screenshots from a live local stack.
 python scripts/screenshots.py --activity
 ```
 
-Run it on a **desktop machine**, not a headless CI box: headless browsers
-frequently fail to load the Material Symbols icon font, and every nav item
-comes out as its ligature name ("space_dashboard" instead of the icon). The
-script detects that and refuses rather than writing broken images.
+Runs headlessly. Browsers in headless environments frequently fail to load the
+Material Symbols icon font over the network, which makes every nav item come
+out as its ligature name ("space_dashboard" instead of the icon) — so the
+script fetches the font itself and injects it as a data URI.
+
+It verifies that worked by measuring a glyph's box, not by reading its text:
+`innerText` returns the ligature name whether the icon painted as a glyph or as
+the literal word, so a text check passes on exactly the broken output it is
+supposed to catch. If the font did not take, or a page could not reach the API,
+it refuses rather than writing misleading images.
+
+```bash
+# point at an existing browser instead of downloading one
+AEGIS_CHROMIUM=/path/to/chrome python scripts/screenshots.py --activity
+```
 
 Full setup instructions are in the file's docstring — it needs the backend
 running with CORS open to the preview server, and the frontend built against
-that backend.
+that backend. The nine filenames it writes are the nine README.md embeds; keep
+them in step.
 
 ## Which file does each tool read?
 

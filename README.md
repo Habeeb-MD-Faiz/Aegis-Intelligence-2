@@ -138,6 +138,10 @@ None of these depend on the agent behaving well.
 Captured from a live local stack — the numbers shown are real decisions made by
 the running guard, not mockups.
 
+The strip under the header on every screen is read from `GET /config`: it is
+the deployment describing its own security posture, not a decoration. In these
+captures both planes are open and anchoring is unconfigured, and it says so.
+
 ### Mission Control — submit a task, watch it governed
 
 ![Mission Control](screenshots/mission_control.png)
@@ -279,8 +283,10 @@ Annotated templates: [`backend/.env.example`](backend/.env.example) ·
 [`frontend/.env.example`](frontend/.env.example). Full reference and Render
 deployment in [docs/SETUP.md](docs/SETUP.md).
 
-`GET /config` reports which state a deployment is actually in, so the UI never
-implies a guarantee that is not configured.
+`GET /config` reports which state a deployment is actually in, and **the
+dashboard shows it** — the posture strip on Mission Control and the badge in the
+top bar. An open plane is reported as open and a guard set to fail open is
+reported in red, so the UI never implies a guarantee that is not configured.
 
 Never commit API keys or wallet credentials. `.env` is gitignored;
 `.env.example` is the template.
@@ -301,8 +307,7 @@ cd backend && python -m pytest -q      # 75 tests
 
 Each regression test fails against the previous implementation. CI additionally
 verifies the API boots with no configuration, the demo runs clean, the frontend
-builds, the committed ledger still verifies, and `AGENTS.md` matches
-`CLAUDE.md`.
+typechecks and builds, and `AGENTS.md` matches `CLAUDE.md`.
 
 ---
 
@@ -363,6 +368,7 @@ aegis/
 │   └── x402/                  # payment lifecycle (settlement simulated)
 ├── frontend/
 │   ├── src/config.ts          # single source for API URL + credentials
+│   ├── src/services/api.ts    # requestJson — the only place a call is made
 │   └── src/                   # pages, services, components
 ├── docs/
 │   ├── ARCHITECTURE.md        # how the guard works
@@ -390,7 +396,7 @@ AEGIS is a prototype. Precisely:
 | Behavioural risk scoring | ✅ **Real** — five signals, no LLM |
 | Control / data plane split | ✅ **Real** — enforced in code |
 | SQLite persistence | ✅ **Real** |
-| Hash-linked ledger and verification | ✅ **Real** — 25 blocks committed |
+| Hash-linked ledger and verification | ✅ **Real** — a fresh start seeds a verifiable chain; every decision after that appends to it |
 | Analytics screen | ✅ **Real** — reads live decisions |
 | On-chain anchoring | 🟡 **Built, tested offline.** Signing and signature recovery are unit-tested against a fake RPC; the live broadcast needs a funded Base Sepolia key — run `python anchor_preflight.py` |
 | x402 payment lifecycle | 🟡 **Simulated** — the state machine is real, settlement is stubbed and labelled `settlement_mode: "simulated"` |

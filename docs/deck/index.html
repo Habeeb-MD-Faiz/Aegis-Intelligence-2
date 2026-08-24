@@ -775,8 +775,8 @@
         <div class="card">
           <div class="card-num">LOCAL</div>
           <h3>Hash-linked and verified on read</h3>
-          <p>25 blocks committed. <span class="mono ink">verify_blockchain()</span> re-derives every
-          hash and names the first tampered block.</p>
+          <p>Every decision appends a block. <span class="mono ink">verify_blockchain()</span> re-derives
+          every hash and names the first tampered block.</p>
         </div>
         <div class="card brass">
           <div class="card-num">ON-CHAIN</div>
@@ -895,7 +895,7 @@
             <tr><td>Decision flow &amp; escalation</td><td><span class="tag tag-real">Real</span></td><td>End to end, including human approval</td></tr>
             <tr><td>Credential custody</td><td><span class="tag tag-real">Real</span></td><td>Agents never receive a secret</td></tr>
             <tr><td>Behavioural risk scoring</td><td><span class="tag tag-real">Real</span></td><td>Five signals, no LLM — reproducible</td></tr>
-            <tr><td>Tamper-evident ledger</td><td><span class="tag tag-real">Real</span></td><td>25 blocks, verified on read</td></tr>
+            <tr><td>Tamper-evident ledger</td><td><span class="tag tag-real">Real</span></td><td>Hash-linked, verified on read</td></tr>
             <tr><td>On-chain anchoring</td><td><span class="tag tag-sim">Tested offline</span></td><td>Signing proven; live broadcast needs a funded key</td></tr>
             <tr><td>x402 payment lifecycle</td><td><span class="tag tag-sim">Simulated</span></td><td>State machine real, settlement stubbed</td></tr>
             <tr><td>Value transfer</td><td><span class="tag tag-no">Not built</span></td><td>No funds move. Pay-to is the zero address</td></tr>

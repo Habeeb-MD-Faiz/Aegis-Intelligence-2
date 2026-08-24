@@ -12,6 +12,26 @@ $5,000 on a service nobody approved.
 AEGIS sits in the middle. Agents can't pay anyone directly; they ask AEGIS, and
 AEGIS decides. Every decision is explained and permanently recorded.
 
+## The posture strip
+
+Every screen carries a badge in the top bar, and Mission Control opens on the
+full breakdown. It is not decoration — it is the backend describing itself, and
+it is the first thing to read when you sit down.
+
+| Signal | What "good" looks like | What the other state means |
+|---|---|---|
+| **Control plane** | Locked | Open — anyone who can reach the API can change policy. Fine on your laptop, not on a public URL. Set `AEGIS_OPERATOR_TOKEN` |
+| **Data plane** | Locked | Open — any caller can submit a spend intent. Policy still evaluates every one of them |
+| **Guard** | Fails closed | **Fails open** — a policy-engine error will release the payment instead of refusing it. This should never be on |
+| **Anchoring** | The chain name | Not configured — the ledger is still hash-linked and verified locally, just not written on chain |
+| **Policy AI** | Either | Off simply means no `GROQ_API_KEY`. Suggestions are unavailable; enforcement is unaffected, because it never used an LLM |
+
+Hover any signal for the detail. If the strip says **backend unreachable**, the
+numbers on every other screen are stale — fix that before trusting anything.
+
+The public demo runs with both planes open on purpose, and says so rather than
+implying a lock that is not there.
+
 ## The three outcomes
 
 Every request ends in one of three states. This is the heart of it — AEGIS
@@ -149,6 +169,7 @@ Worth knowing before you show this to anyone.
 | x402 payment lifecycle | **Simulated** — real state machine, stubbed settlement |
 | Money movement | **None.** No funds ever move |
 | Analytics | Real — reads live decisions |
+| Posture strip | Real — read from `GET /config` on every page load |
 | Incidents / Audit Logs / Approval Center | **Fixture data**, not live |
 
 Settled payments are labelled `settlement_mode: "simulated"` in the API for
